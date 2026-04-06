@@ -212,12 +212,10 @@ function buildProjectFiles({ adapter, packageManager, projectName }) {
     "src/routes.ts": createRoutesFile(),
     "src/routes/home.tsx": createHomeRoute(adapter),
     "src/shells/public.tsx": createShellFile(projectName),
-    "vite.config.ts": createViteConfig(),
+    "vite.config.ts": createViteConfig(adapter),
   };
 
   if (adapter.id === "cloudflare") {
-    files["src/worker.ts"] = createCloudflareWorker();
-    files["vite.worker.config.ts"] = createCloudflareWorkerViteConfig();
     files["wrangler.jsonc"] = createWranglerConfig(projectName);
   }
 
@@ -241,8 +239,7 @@ function createPackageJson({ adapter, projectName }) {
   };
 
   if (adapter.id === "cloudflare") {
-    scripts["build:worker"] = "viact build && vite build --config vite.worker.config.ts";
-    scripts.deploy = "viact build && vite build --config vite.worker.config.ts && wrangler deploy";
+    scripts.deploy = "viact build && wrangler deploy";
     devDependencies.wrangler = "^4.12.0";
   }
 
@@ -264,14 +261,19 @@ function createPackageJson({ adapter, projectName }) {
   )}\n`;
 }
 
-function createViteConfig() {
+function createViteConfig(adapter) {
+  const viactCall =
+    adapter.id === "cloudflare"
+      ? 'viact({ adapter: "cloudflare" })'
+      : "viact()";
+
   return [
     'import { defineConfig } from "vite";',
     'import preact from "@preact/preset-vite";',
     'import { viact } from "@viact/vite-plugin";',
     "",
     "export default defineConfig({",
-    "  plugins: [preact(), viact()],",
+    `  plugins: [preact(), ${viactCall}],`,
     "});",
     "",
   ].join("\n");
@@ -370,46 +372,6 @@ function createHealthRoute(adapter) {
   ].join("\n");
 }
 
-function createCloudflareWorker() {
-  return [
-    'import { createCloudflareFetchHandler } from "@viact/adapter-cloudflare";',
-    'import manifest from "../dist/client/.vite/manifest.json";',
-    'import { apiRoutes, registry, resolvedApp } from "../dist/server/server.js";',
-    "",
-    'const clientEntry = manifest["virtual:viact/client"];',
-    "const clientEntryUrl = clientEntry ? `/${clientEntry.file}` : undefined;",
-    "const cssUrls = (clientEntry?.css ?? []).map((file) => `/${file}`);",
-    "",
-    "export default {",
-    "  fetch: createCloudflareFetchHandler({",
-    "    app: resolvedApp,",
-    "    apiRoutes,",
-    "    clientEntryUrl,",
-    "    cssUrls,",
-    "    registry,",
-    "  }),",
-    "};",
-    "",
-  ].join("\n");
-}
-
-function createCloudflareWorkerViteConfig() {
-  return [
-    'import { defineConfig } from "vite";',
-    "",
-    "export default defineConfig({",
-    "  build: {",
-    "    emptyOutDir: false,",
-    '    outDir: "dist/worker",',
-    '    rollupOptions: { output: { entryFileNames: "worker.js", format: "es" } },',
-    '    ssr: "src/worker.ts",',
-    '    target: "es2022",',
-    "  },",
-    "});",
-    "",
-  ].join("\n");
-}
-
 function createWranglerConfig(projectName) {
   const compatibilityDate = new Date().toISOString().slice(0, 10);
 
@@ -417,11 +379,12 @@ function createWranglerConfig(projectName) {
     "{",
     '  "$schema": "node_modules/wrangler/config-schema.json",',
     `  "name": ${JSON.stringify(projectName)},`,
-    '  "main": "dist/worker/worker.js",',
+    '  "main": "dist/server/server.js",',
     `  "compatibility_date": ${JSON.stringify(compatibilityDate)},`,
     '  "assets": {',
     '    "binding": "ASSETS",',
-    '    "directory": "dist/client"',
+    '    "directory": "dist/client",',
+    '    "run_worker_first": true',
     "  }",
     "}",
     "",
@@ -450,7 +413,7 @@ function createReadme({ adapter, packageManager, projectName }) {
     lines.push(`- \`${deployCommand}\``);
     lines.push("");
     lines.push(
-      "Cloudflare note: local development still uses `viact dev`. The worker bundle is produced when you run `build:worker` or `deploy`.",
+      "Edit `wrangler.jsonc` to add KV, D1, R2, cron triggers, or other Cloudflare bindings.",
     );
   }
 

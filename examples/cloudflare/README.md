@@ -8,13 +8,13 @@ This example is wired to Viact's Cloudflare build target.
 - `pnpm viact build` creates:
   - `dist/client/` for static assets and prerendered HTML
   - `dist/server/server.js` as the Worker bundle
-  - `dist/server/wrangler.json` as a deployable Wrangler config
 - `pnpm viact preview` previews the production build locally.
 
 ## Deploy
 
-After building, deploy the generated Worker with:
+The `wrangler.jsonc` in this directory is yours to edit — add KV, D1, R2,
+cron triggers, or any other Cloudflare bindings as needed. After building:
 
 ```bash
-pnpm dlx wrangler deploy --config dist/server/wrangler.json
+pnpm dlx wrangler deploy
 ```

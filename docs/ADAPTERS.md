@@ -106,8 +106,9 @@ server.listen(3000);
 executionContext }` to viact so loaders, actions, and middleware can access
   bindings without extra wiring.
 - **Build output**: `viact({ adapter: "cloudflare" })` makes `viact build`
-  emit a Worker bundle in `dist/server/server.js` and a deployable
-  `dist/server/wrangler.json` that points at `dist/client/` assets.
+  emit a Worker bundle in `dist/server/server.js`. You own a `wrangler.jsonc`
+  in your project root that points at the output — this lets you add KV, D1,
+  R2, cron, and any other Cloudflare bindings without losing them on rebuild.
 - **KV/D1/R2 support**: custom context factories and the default build entry both
   surface the Cloudflare `env` object.
 

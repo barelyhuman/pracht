@@ -11,7 +11,7 @@ test("viact build emits a deployable Cloudflare Worker setup", async () => {
   const repoRoot = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
   const exampleDir = resolve(repoRoot, "examples/cloudflare");
   const distDir = resolve(exampleDir, "dist");
-  const wranglerPath = resolve(exampleDir, "dist/server/wrangler.json");
+  const wranglerPath = resolve(exampleDir, "wrangler.jsonc");
   const serverEntryPath = resolve(exampleDir, "dist/server/server.js");
 
   rmSync(distDir, { force: true, recursive: true });
@@ -25,19 +25,19 @@ test("viact build emits a deployable Cloudflare Worker setup", async () => {
     stdio: "pipe",
   });
 
+  // wrangler.jsonc is user-owned (checked into the project), not generated
   expect(existsSync(wranglerPath)).toBe(true);
   expect(existsSync(serverEntryPath)).toBe(true);
 
   const wranglerConfig = JSON.parse(readFileSync(wranglerPath, "utf-8"));
   expect(wranglerConfig).toMatchObject({
-    main: "./server.js",
+    main: "dist/server/server.js",
     assets: {
-      directory: "../client",
+      directory: "dist/client",
       binding: "ASSETS",
       run_worker_first: true,
     },
   });
-  expect(wranglerConfig.compatibility_date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
 
   const workerSource = readFileSync(serverEntryPath, "utf-8");
   expect(workerSource).toContain("cloudflareAssetsBinding");

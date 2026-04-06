@@ -139,12 +139,8 @@ async function build() {
     }
 
     if (serverMod.buildTarget === "cloudflare") {
-      const outputPath = writeCloudflareBuildConfig({
-        assetsBinding: serverMod.cloudflareAssetsBinding,
-        root,
-      });
-
-      console.log(`\n  Cloudflare config → ${outputPath}\n`);
+      console.log(`\n  Cloudflare worker → dist/server/server.js\n`);
+      console.log(`  Deploy with: wrangler deploy\n`);
     }
 
     if (serverMod.buildTarget === "vercel") {
@@ -336,50 +332,6 @@ Usage:
   viact build     Production build (client + server)
   viact preview   Preview the production build
 `);
-}
-
-function writeCloudflareBuildConfig({ assetsBinding, root }) {
-  const outputPath = join(root, "dist/server/wrangler.json");
-  const config = createCloudflareWranglerConfig({ assetsBinding, root });
-
-  writeFileSync(outputPath, `${JSON.stringify(config, null, 2)}\n`, "utf-8");
-  return outputPath.replace(`${root}/`, "");
-}
-
-function createCloudflareWranglerConfig({ assetsBinding, root }) {
-  return {
-    name: getCloudflareWorkerName(root),
-    main: "./server.js",
-    compatibility_date: new Date().toISOString().slice(0, 10),
-    assets: {
-      directory: "../client",
-      binding: assetsBinding || "ASSETS",
-      run_worker_first: true,
-    },
-  };
-}
-
-function getCloudflareWorkerName(root) {
-  const packageJsonPath = resolve(root, "package.json");
-
-  if (!existsSync(packageJsonPath)) {
-    return "viact-app";
-  }
-
-  const packageJson = JSON.parse(readFileSync(packageJsonPath, "utf-8"));
-  return sanitizeCloudflareWorkerName(packageJson.name || "viact-app");
-}
-
-function sanitizeCloudflareWorkerName(value) {
-  return (
-    value
-      .replace(/^@/, "")
-      .replace(/\//g, "-")
-      .toLowerCase()
-      .replace(/[^a-z0-9-]/g, "-")
-      .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "") || "viact-app"
-  );
 }
 
 function setDefaultSecurityHeaders(res, headers = {}) {
