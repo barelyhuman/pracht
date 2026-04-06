@@ -5,12 +5,12 @@ export default defineConfig({
   timeout: 30_000,
   retries: 0,
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: "http://localhost:3100",
   },
   webServer: {
     command:
-      "cd examples/cloudflare && NODE_OPTIONS='--experimental-strip-types' node ../../packages/cli/bin/viact.js dev",
-    port: 3000,
+      "cd examples/cloudflare && PORT=3100 NODE_OPTIONS='--experimental-strip-types' node ../../packages/cli/bin/viact.js dev",
+    port: 3100,
     reuseExistingServer: !process.env.CI,
     timeout: 15_000,
   },

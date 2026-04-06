@@ -53,9 +53,11 @@ handlers[command]().catch((err) => {
 // ---------------------------------------------------------------------------
 
 async function dev() {
+  const port = parseInt(process.env.PORT || process.argv[3] || "3000", 10);
+
   const server = await createServer({
     root: process.cwd(),
-    server: { port: 3000 },
+    server: { port },
   });
 
   await server.listen();
