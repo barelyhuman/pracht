@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@viact/adapter-cloudflare": "workspace:*",
-    "viact": "workspace:*"
+    "viact": "workspace:*",
+    "wrangler": "^4.80.0"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.9.4",
