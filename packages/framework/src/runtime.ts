@@ -394,6 +394,89 @@ function escapeHtml(str: string): string {
     .replace(/"/g, "&quot;");
 }
 
+// ---------------------------------------------------------------------------
+// SSG Prerendering
+// ---------------------------------------------------------------------------
+
+export interface PrerenderResult {
+  path: string;
+  html: string;
+}
+
+export interface PrerenderAppOptions {
+  app: ViactApp;
+  registry?: ModuleRegistry;
+  clientEntryUrl?: string;
+  cssUrls?: string[];
+}
+
+export async function prerenderApp(
+  options: PrerenderAppOptions,
+): Promise<PrerenderResult[]> {
+  const { resolveApp } = await import("./app.ts");
+  const resolved = resolveApp(options.app);
+  const results: PrerenderResult[] = [];
+
+  for (const route of resolved.routes) {
+    if (route.render !== "ssg") continue;
+
+    const paths = await collectSSGPaths(route, options.registry);
+
+    for (const pathname of paths) {
+      const url = new URL(pathname, "http://localhost");
+      const request = new Request(url, { method: "GET" });
+
+      const response = await handleViactRequest({
+        app: options.app,
+        request,
+        registry: options.registry,
+        clientEntryUrl: options.clientEntryUrl,
+        cssUrls: options.cssUrls,
+      });
+
+      if (response.status !== 200) {
+        console.warn(
+          `  Warning: SSG route "${pathname}" returned status ${response.status}, skipping.`,
+        );
+        continue;
+      }
+
+      const html = await response.text();
+      results.push({ path: pathname, html });
+    }
+  }
+
+  return results;
+}
+
+async function collectSSGPaths(
+  route: import("./types.ts").ResolvedRoute,
+  registry?: ModuleRegistry,
+): Promise<string[]> {
+  const hasDynamicSegments = route.segments.some(
+    (s) => s.type === "param" || s.type === "catchall",
+  );
+
+  if (!hasDynamicSegments) {
+    return [route.path];
+  }
+
+  // Dynamic route — must export prerender() to enumerate paths
+  const routeModule = await resolveRegistryModule<RouteModule>(
+    registry?.routeModules,
+    route.file,
+  );
+
+  if (!routeModule?.prerender) {
+    console.warn(
+      `  Warning: SSG route "${route.path}" has dynamic segments but no prerender() export, skipping.`,
+    );
+    return [];
+  }
+
+  return routeModule.prerender();
+}
+
 async function readResponseBody(response: Response): Promise<unknown> {
   const contentType = response.headers.get("content-type") ?? "";
   if (contentType.includes("application/json")) {

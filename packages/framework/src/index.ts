@@ -9,6 +9,7 @@ export {
 export {
   Form,
   handleViactRequest,
+  prerenderApp,
   startApp,
   useRevalidateRoute,
   useRouteData,
@@ -57,6 +58,8 @@ export type {
 export type {
   FormProps,
   HandleViactRequestOptions,
+  PrerenderAppOptions,
+  PrerenderResult,
   StartAppOptions,
   SubmitActionOptions,
   ViactHydrationState,

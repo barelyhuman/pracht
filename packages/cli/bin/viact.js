@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { createServer as createHttpServer } from "node:http";
-import { resolve, join, extname } from "node:path";
-import { existsSync, statSync, createReadStream, readFileSync } from "node:fs";
+import { resolve, join, dirname, extname } from "node:path";
+import { existsSync, statSync, mkdirSync, writeFileSync, createReadStream, readFileSync } from "node:fs";
 import { createServer, build as viteBuild } from "vite";
 
 const VERSION = "0.0.0";
@@ -68,6 +68,47 @@ async function build() {
       outDir: "dist/server",
     },
   });
+
+  // 3. SSG prerendering
+  const root = process.cwd();
+  const serverEntry = resolve(root, "dist/server/server.js");
+  const clientDir = resolve(root, "dist/client");
+
+  if (existsSync(serverEntry)) {
+    const serverMod = await import(serverEntry);
+    const { prerenderApp } = await import("viact");
+
+    // Read the Vite manifest for asset URLs
+    const manifestPath = resolve(clientDir, ".vite/manifest.json");
+    const viteManifest = existsSync(manifestPath)
+      ? JSON.parse(readFileSync(manifestPath, "utf-8"))
+      : {};
+
+    const clientEntry = viteManifest["virtual:viact/client"];
+    const clientEntryUrl = clientEntry ? `/${clientEntry.file}` : undefined;
+    const cssUrls = (clientEntry?.css ?? []).map((f) => `/${f}`);
+
+    const pages = await prerenderApp({
+      app: serverMod.resolvedApp,
+      registry: serverMod.registry,
+      clientEntryUrl,
+      cssUrls,
+    });
+
+    if (pages.length > 0) {
+      console.log(`\n  Prerendering ${pages.length} SSG route(s)...\n`);
+      for (const page of pages) {
+        const filePath =
+          page.path === "/"
+            ? join(clientDir, "index.html")
+            : join(clientDir, page.path, "index.html");
+
+        mkdirSync(dirname(filePath), { recursive: true });
+        writeFileSync(filePath, page.html, "utf-8");
+        console.log(`    ${page.path} → ${filePath.replace(root + "/", "")}`);
+      }
+    }
+  }
 
   console.log("\n  Build complete.\n");
 }
