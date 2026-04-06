@@ -26,7 +26,7 @@ export interface VercelAdapterOptions<
   registry?: ModuleRegistry;
   apiRoutes?: ResolvedApiRoute[];
   clientEntryUrl?: string;
-  cssUrls?: string[];
+  cssManifest?: Record<string, string[]>;
   createContext?: (args: VercelContextArgs<TVercelContext>) => TContext | Promise<TContext>;
 }
 
@@ -51,7 +51,7 @@ export function createVercelEdgeHandler<
       context: viactContext,
       apiRoutes: options.apiRoutes,
       clientEntryUrl: options.clientEntryUrl,
-      cssUrls: options.cssUrls,
+      cssManifest: options.cssManifest,
     } satisfies HandleViactRequestOptions<TContext>);
   };
 }
@@ -74,7 +74,7 @@ export function createVercelServerEntryModule(
     "    context,",
     "    apiRoutes,",
     "    clientEntryUrl: clientEntryUrl ?? undefined,",
-    "    cssUrls,",
+    "    cssManifest,",
     "  });",
     "}",
     "",

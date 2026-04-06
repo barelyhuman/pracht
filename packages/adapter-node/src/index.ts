@@ -27,7 +27,7 @@ export interface NodeAdapterOptions<TContext = unknown> {
   isgManifest?: Record<string, ISGManifestEntry>;
   apiRoutes?: ResolvedApiRoute[];
   clientEntryUrl?: string;
-  cssUrls?: string[];
+  cssManifest?: Record<string, string[]>;
   createContext?: (args: NodeAdapterContextArgs) => TContext | Promise<TContext>;
 }
 
@@ -95,7 +95,7 @@ export function createNodeRequestHandler<TContext = unknown>(
       request,
       apiRoutes: options.apiRoutes,
       clientEntryUrl: options.clientEntryUrl,
-      cssUrls: options.cssUrls,
+      cssManifest: options.cssManifest,
     } satisfies HandleViactRequestOptions<TContext>);
 
     // Cache ISG responses on first render

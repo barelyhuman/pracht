@@ -32,7 +32,7 @@ export interface CloudflareAdapterOptions<
   registry?: ModuleRegistry;
   apiRoutes?: ResolvedApiRoute[];
   clientEntryUrl?: string;
-  cssUrls?: string[];
+  cssManifest?: Record<string, string[]>;
   assetsBinding?: string;
   createContext?: (args: CloudflareContextArgs<TEnv>) => TContext | Promise<TContext>;
 }
@@ -71,7 +71,7 @@ export function createCloudflareFetchHandler<
       context,
       apiRoutes: options.apiRoutes,
       clientEntryUrl: options.clientEntryUrl,
-      cssUrls: options.cssUrls,
+      cssManifest: options.cssManifest,
     } satisfies HandleViactRequestOptions<TContext>);
   };
 }
@@ -86,6 +86,11 @@ export function createCloudflareServerEntryModule(
     "",
     "async function maybeServeViactAsset(request, env) {",
     '  if (request.method !== "GET" && request.method !== "HEAD") {',
+    "    return null;",
+    "  }",
+    "",
+    '  // Route state requests must be handled by the framework (returns JSON), not static assets',
+    '  if (request.headers.get("x-viact-route-state-request") === "1") {',
     "    return null;",
     "  }",
     "",
@@ -111,7 +116,7 @@ export function createCloudflareServerEntryModule(
     "    context: { env, executionContext },",
     "    apiRoutes,",
     "    clientEntryUrl: clientEntryUrl ?? undefined,",
-    "    cssUrls,",
+    "    cssManifest,",
     "  });",
     "}",
     "",
@@ -126,6 +131,11 @@ async function maybeServeAsset(
   assetsBinding: string,
 ): Promise<Response | null> {
   if (request.method !== "GET" && request.method !== "HEAD") {
+    return null;
+  }
+
+  // Route state requests must be handled by the framework (returns JSON), not static assets
+  if (request.headers.get("x-viact-route-state-request") === "1") {
     return null;
   }
 

@@ -8,6 +8,7 @@ export const app = defineApp({
   routes: [
     group({ shell: "home" }, [route("/", "./routes/home.tsx", { id: "home", render: "ssg" })]),
     group({ shell: "docs" }, [
+      route("/docs", "./routes/docs/index.tsx", { id: "docs-index", render: "ssr" }),
       route("/docs/routing", "./routes/docs/routing.tsx", {
         id: "routing",
         render: "ssg",

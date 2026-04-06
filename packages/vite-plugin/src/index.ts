@@ -191,7 +191,7 @@ export function createViactServerModuleSource(
     `export const apiRoutes = resolveApiRoutes(Object.keys(apiModules), ${JSON.stringify(resolved.apiDir)});`,
     `export const buildTarget = ${JSON.stringify(resolved.adapter)};`,
     `export const clientEntryUrl = ${JSON.stringify(clientBuild.clientEntryUrl)};`,
-    `export const cssUrls = ${JSON.stringify(clientBuild.cssUrls)};`,
+    `export const cssManifest = ${JSON.stringify(clientBuild.cssManifest)};`,
     "",
   ];
 
@@ -339,24 +339,56 @@ function resolveOptions(options: ViactPluginOptions): ResolvedViactPluginOptions
 
 function readClientBuildAssets(root = process.cwd()): {
   clientEntryUrl: string | null;
-  cssUrls: string[];
+  cssManifest: Record<string, string[]>;
 } {
   const manifestPath = resolve(root, "dist/client/.vite/manifest.json");
   if (!existsSync(manifestPath)) {
-    return { clientEntryUrl: null, cssUrls: [] };
+    return { clientEntryUrl: null, cssManifest: {} };
   }
 
   const rawManifest = readFileSync(manifestPath, "utf-8");
   const manifest = JSON.parse(rawManifest) as Record<string, ViteManifestEntry>;
   const clientEntry = manifest[VIACT_CLIENT_MODULE_ID];
 
+  // For each source file, compute its transitive CSS by walking static imports only
+  // (not dynamicImports — those belong to other shells/routes loaded separately).
+  // This gives per-page CSS: look up the matched shell + route at request time.
+  function collectTransitiveCss(key: string): string[] {
+    const css = new Set<string>();
+    const visited = new Set<string>();
+
+    function collect(k: string): void {
+      if (visited.has(k)) return;
+      visited.add(k);
+      const entry = manifest[k];
+      if (!entry) return;
+      for (const c of entry.css ?? []) css.add(c);
+      for (const imp of entry.imports ?? []) collect(imp);
+    }
+
+    collect(key);
+    return [...css];
+  }
+
+  const cssManifest: Record<string, string[]> = {};
+  for (const [key, entry] of Object.entries(manifest)) {
+    if (!entry.src) continue;
+    const css = collectTransitiveCss(key);
+    if (css.length > 0) {
+      cssManifest[key] = css.map((f) => `/${f}`);
+    }
+  }
+
   return {
     clientEntryUrl: clientEntry ? `/${clientEntry.file}` : null,
-    cssUrls: (clientEntry?.css ?? []).map((file) => `/${file}`),
+    cssManifest,
   };
 }
 
 interface ViteManifestEntry {
   file: string;
+  src?: string;
   css?: string[];
+  imports?: string[];
+  dynamicImports?: string[];
 }

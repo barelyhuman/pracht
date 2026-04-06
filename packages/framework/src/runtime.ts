@@ -34,6 +34,9 @@ export interface HandleViactRequestOptions<TContext = unknown> {
   context?: TContext;
   registry?: ModuleRegistry;
   clientEntryUrl?: string;
+  /** Per-source-file CSS map produced by the vite plugin (preferred over cssUrls). */
+  cssManifest?: Record<string, string[]>;
+  /** @deprecated Pass cssManifest instead for per-page CSS resolution. */
   cssUrls?: string[];
   apiRoutes?: ResolvedApiRoute[];
 }
@@ -405,7 +408,14 @@ export async function handleViactRequest<TContext>(
   }
 
   // --- Execute loader ---
-  const data = routeModule?.loader ? await routeModule.loader(routeArgs) : undefined;
+  const loaderResult = routeModule?.loader ? await routeModule.loader(routeArgs) : undefined;
+
+  // Allow loaders to return a Response directly (e.g. for redirects)
+  if (loaderResult instanceof Response) {
+    return withDefaultSecurityHeaders(loaderResult);
+  }
+
+  const data = loaderResult;
 
   // --- Route state request (client navigation): return JSON ---
   if (isRouteStateRequest) {
@@ -420,6 +430,8 @@ export async function handleViactRequest<TContext>(
   // --- Merge head metadata ---
   const head = await mergeHeadMetadata(shellModule, routeModule, routeArgs, data);
 
+  const cssUrls = resolvePageCssUrls(options, match.route.shellFile, match.route.file);
+
   // --- SPA mode: shell HTML with empty body, no SSR ---
   if (match.route.render === "spa") {
     return htmlResponse(
@@ -432,7 +444,7 @@ export async function handleViactRequest<TContext>(
           data: null,
         },
         clientEntryUrl: options.clientEntryUrl,
-        cssUrls: options.cssUrls,
+        cssUrls,
       }),
     );
   }
@@ -478,7 +490,7 @@ export async function handleViactRequest<TContext>(
         data,
       },
       clientEntryUrl: options.clientEntryUrl,
-      cssUrls: options.cssUrls,
+      cssUrls,
     }),
   );
 }
@@ -486,6 +498,30 @@ export async function handleViactRequest<TContext>(
 // ---------------------------------------------------------------------------
 // Internal helpers
 // ---------------------------------------------------------------------------
+
+function resolvePageCssUrls(
+  options: HandleViactRequestOptions<unknown>,
+  shellFile: string | undefined,
+  routeFile: string,
+): string[] {
+  if (!options.cssManifest) return options.cssUrls ?? [];
+
+  const css = new Set<string>();
+
+  function addFromManifest(file: string): void {
+    const suffix = file.replace(/^\.\//, "");
+    for (const [key, cssFiles] of Object.entries(options.cssManifest!)) {
+      if (key === file || key.endsWith(`/${suffix}`) || key.endsWith(suffix)) {
+        for (const c of cssFiles) css.add(c);
+        break;
+      }
+    }
+  }
+
+  if (shellFile) addFromManifest(shellFile);
+  addFromManifest(routeFile);
+  return [...css];
+}
 
 async function useRevalidateResult(
   runtime: ViactRuntimeValue | undefined,
