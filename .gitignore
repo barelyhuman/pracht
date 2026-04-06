@@ -1,6 +1,6 @@
 node_modules
 dist
 .vercel
-.claude
+.claude/settings.json
 !.claude/commands/
 test-results
