@@ -9,7 +9,7 @@ test("viact build emits a deployable Cloudflare Worker setup", async () => {
   test.setTimeout(120_000);
 
   const repoRoot = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
-  const exampleDir = resolve(repoRoot, "examples/basic");
+  const exampleDir = resolve(repoRoot, "examples/cloudflare");
   const distDir = resolve(exampleDir, "dist");
   const wranglerPath = resolve(exampleDir, "dist/server/wrangler.json");
   const serverEntryPath = resolve(exampleDir, "dist/server/server.js");
