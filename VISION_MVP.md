@@ -1,8 +1,6 @@
 # Viact — Vision & MVP
 
 Viact is a full-stack Preact framework built on Vite. It draws routing and rendering
-architecture from [plyon](../plyon) and extends it with API routes, deployment
-adapters, and Claude Code skills for framework operation.
 
 ---
 

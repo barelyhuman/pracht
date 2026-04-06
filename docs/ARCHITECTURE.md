@@ -221,7 +221,7 @@ Build starts
   → Execute loader for each path
   → Render to HTML string
   → Write to dist/client/<path>/index.html
-  → Generate plyon-route-manifest.json for runtime
+  → Generate viact-route-manifest.json for runtime
 ```
 
 ### Client Navigation
