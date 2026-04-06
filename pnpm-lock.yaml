@@ -166,6 +166,9 @@ importers:
 
   packages/vite-plugin:
     dependencies:
+      '@preact/preset-vite':
+        specifier: ^2.10.5
+        version: 2.10.5(@babel/core@7.29.0)(preact@10.29.1)(rollup@4.60.1)(vite@8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@22.19.17))
       '@viact/adapter-cloudflare':
         specifier: workspace:*
         version: link:../adapter-cloudflare

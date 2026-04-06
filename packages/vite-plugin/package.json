@@ -15,6 +15,7 @@
     "build": "tsdown"
   },
   "dependencies": {
+    "@preact/preset-vite": "^2.10.5",
     "@viact/adapter-cloudflare": "workspace:*",
     "@viact/adapter-vercel": "workspace:*",
     "viact": "workspace:*"

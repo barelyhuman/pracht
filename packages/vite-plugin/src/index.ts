@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { resolve } from "node:path";
+import preact from "@preact/preset-vite";
 import type { Connect, Plugin, ViteDevServer } from "vite";
 
 import { createCloudflareServerEntryModule } from "@viact/adapter-cloudflare";
@@ -58,11 +59,11 @@ const DEFAULTS: ResolvedViactPluginOptions = {
   vercelRegions: undefined as string | string[] | undefined,
 };
 
-export function viact(options: ViactPluginOptions = {}): Plugin {
+export function viact(options: ViactPluginOptions = {}): Plugin[] {
   const resolved = resolveOptions(options);
   let root = process.cwd();
 
-  return {
+  const viactPlugin: Plugin = {
     name: "viact",
     enforce: "pre",
 
@@ -100,13 +101,9 @@ export function viact(options: ViactPluginOptions = {}): Plugin {
       const root = server.config.root;
       const relative = file.startsWith(root) ? file.slice(root.length) : file;
 
-      // App manifest changed — full reload (route definitions may have changed)
+      // App manifest changed — restart server (route definitions may have changed)
       if (relative === resolved.appFile) {
-        const serverMod = server.moduleGraph.getModuleById(VIACT_SERVER_MODULE_ID);
-        const clientMod = server.moduleGraph.getModuleById(VIACT_CLIENT_MODULE_ID);
-        if (serverMod) server.moduleGraph.invalidateModule(serverMod);
-        if (clientMod) server.moduleGraph.invalidateModule(clientMod);
-        server.hot.send({ type: "full-reload" });
+        server.restart();
         return [];
       }
 
@@ -125,6 +122,8 @@ export function viact(options: ViactPluginOptions = {}): Plugin {
       }
     },
   };
+
+  return [...preact(), viactPlugin];
 }
 
 // ---------------------------------------------------------------------------
