@@ -192,6 +192,8 @@ viact/
   e2e/                # Playwright end-to-end tests
 ```
 
+The live scaffold for this layout is documented in [docs/WORKSPACE.md](docs/WORKSPACE.md).
+
 ---
 
 ## Key Design Decisions

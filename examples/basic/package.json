@@ -1,0 +1,10 @@
+{
+  "name": "@viact/example-basic",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@viact/adapter-node": "workspace:*",
+    "viact": "workspace:*"
+  }
+}

@@ -4,6 +4,9 @@ This document describes the core architecture, abstractions, and design decision
 behind viact. It serves as the source of truth for contributors and AI agents
 working on the framework.
 
+The current repo scaffold and package boundaries are tracked in
+[docs/WORKSPACE.md](WORKSPACE.md).
+
 ---
 
 ## High-Level Architecture
