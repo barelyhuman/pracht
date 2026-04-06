@@ -5,6 +5,7 @@ import preact from "@preact/preset-vite";
 import type { Connect, Plugin, ViteDevServer } from "vite";
 
 import { createCloudflareServerEntryModule } from "@viact/adapter-cloudflare";
+import { createNodeServerEntryModule } from "@viact/adapter-node";
 import { createVercelServerEntryModule } from "@viact/adapter-vercel";
 
 export const VIACT_CLIENT_MODULE_ID = "virtual:viact/client";
@@ -201,6 +202,10 @@ export function createViactServerModuleSource(
         assetsBinding: resolved.cloudflareAssetsBinding,
       }),
     );
+  }
+
+  if (resolved.adapter === "node") {
+    source.push(createNodeServerEntryModule());
   }
 
   if (resolved.adapter === "vercel") {

@@ -57,10 +57,10 @@ described in `VISION_MVP.md`.
   `hydrate()` from Preact.
 - **CLI** — `viact dev` starts a Vite dev server with SSR, `viact build` runs
   client + server builds (with Vite manifest generation, SSG/ISG prerendering,
-  ISG manifest output, Cloudflare `wrangler.json` generation, and Vercel
-  `.vercel/output/` generation when the app targets those adapters), and
-  `viact preview` serves the production build with static-file fallback and ISG
-  revalidation.
+  ISG manifest output, executable Node server output in `dist/server/server.js`,
+  and Vercel `.vercel/output/` generation when the app targets those adapters),
+  and `viact preview` serves the production build with static-file fallback and
+  ISG revalidation.
 - **Package builds** — `tsdown` compiles `viact`, `@viact/vite-plugin`,
   `@viact/adapter-node`, `@viact/adapter-cloudflare`, and
   `@viact/adapter-vercel` from TypeScript to ESM (`dist/index.mjs` +
@@ -84,7 +84,7 @@ described in `VISION_MVP.md`.
   integration required — plugins participate in the full Vite pipeline for both
   client and SSR builds.
 
-- **Claude Code skills** — Three slash commands in `.claude/commands/`:
+- **Claude Code skills** — Three repo-local slash commands in `.claude/commands/`:
   - `/scaffold` — generate routes, shells, middleware, API routes with correct
     types and manifest wiring.
   - `/debug` — framework-aware debugging (route matching, loader errors,

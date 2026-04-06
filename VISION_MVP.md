@@ -89,12 +89,11 @@ Each adapter:
 
 ### Skills (Claude Code)
 
-Built-in Claude Code skills for framework developers:
+Repo-local Claude Code commands for framework developers live in `.claude/commands/`:
 
 - **Scaffold**: generate routes, shells, middleware, API routes with correct wiring
 - **Debug**: framework-aware debugging (route matching, loader errors, hydration)
 - **Deploy**: guided adapter setup and deployment
-- **Migrate**: upgrade paths between versions
 
 ---
 
@@ -112,7 +111,7 @@ SSR and SSG, deployed to Node. Thoroughly tested with Playwright E2E tests.
    - `MiddlewareModule` type — server-side request interceptor
    - Router: `matchAppRoute()` segment-based matching
    - Server renderer: `handleViactRequest()` → full HTML with hydration state
-   - Client runtime: `startApp()`, hydration, client-side navigation, prefetch
+   - Client runtime: `startApp()`, hydration, client-side navigation
    - Hooks: `useRouteData()`, `useRevalidateRoute()`, `useSubmitAction()`, `<Form>`
 
 2. **`packages/vite-plugin`** — Vite integration
@@ -162,7 +161,7 @@ SSR and SSG, deployed to Node. Thoroughly tested with Playwright E2E tests.
 - `adapter-cloudflare` with Workers, KV, ISG
 - `adapter-vercel` with serverless + edge functions
 - ISG webhook revalidation
-- Claude Code skills for scaffolding, debugging, deploying
+- Claude Code commands for scaffolding, debugging, and deploying
 - `create-viact` starter CLI
 
 ## Phase 3 — Polish

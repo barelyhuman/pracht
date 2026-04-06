@@ -12,7 +12,7 @@ You are helping deploy a **viact** application. Guide the user through adapter c
 |---------|---------|--------|
 | Node.js | `@viact/adapter-node` | Stable |
 | Cloudflare Workers | `@viact/adapter-cloudflare` | Stable |
-| Vercel | — | Planned |
+| Vercel | `@viact/adapter-vercel` | Stable |
 
 ### Step 1: Determine the target
 
@@ -45,7 +45,7 @@ viact build
 This produces:
 - `dist/client/` — static assets (JS, CSS, prerendered HTML)
 - `dist/server/server.js` — Node server entry
-- `dist/client/viact-isg-manifest.json` — ISG revalidation config (if ISG routes exist)
+- `dist/server/isg-manifest.json` — ISG revalidation config (if ISG routes exist)
 - `dist/client/.vite/manifest.json` — asset manifest for script/style injection
 
 #### Run
@@ -124,7 +124,44 @@ The `ASSETS` binding is automatically available when `assets.directory` is confi
 #### Deploy
 
 ```bash
+viact build
 npx wrangler deploy
+```
+
+Keep `wrangler.jsonc` at the project root. The Viact build writes the worker to
+`dist/server/server.js` and serves assets from `dist/client/`.
+
+---
+
+### Vercel deployment
+
+#### Setup
+
+1. Ensure `@viact/adapter-vercel` is installed (check `package.json`).
+2. In `vite.config.ts`, set the adapter:
+   ```ts
+   import { viact } from "@viact/vite-plugin";
+
+   export default {
+     plugins: [viact({ adapter: "vercel" })],
+   };
+   ```
+
+#### Build
+
+```bash
+viact build
+```
+
+This produces:
+- `.vercel/output/config.json`
+- `.vercel/output/static/`
+- `.vercel/output/functions/render.func/server.js`
+
+#### Deploy
+
+```bash
+npx vercel deploy --prebuilt
 ```
 
 #### Bindings (KV, D1, R2)

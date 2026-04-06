@@ -15,6 +15,7 @@ import type {
   ResolvedApiRoute,
   RouteModule,
   ShellModule,
+  ViactHttpError,
   ViactApp,
 } from "./types.ts";
 
@@ -22,6 +23,13 @@ export interface ViactHydrationState<TData = unknown> {
   url: string;
   routeId: string;
   data: TData;
+  error?: SerializedRouteError | null;
+}
+
+export interface SerializedRouteError {
+  message: string;
+  name: string;
+  status: number;
 }
 
 export interface StartAppOptions<TData = unknown> {
@@ -169,6 +177,10 @@ export function useRevalidateRoute() {
       return undefined;
     }
 
+    if (result.type === "error") {
+      throw deserializeRouteError(result.error);
+    }
+
     runtime?.setData(result.data);
     return result.data;
   };
@@ -253,11 +265,12 @@ export function Form(props: FormProps) {
 
 export type RouteStateResult =
   | { type: "data"; data: unknown }
-  | { type: "redirect"; location: string };
+  | { type: "redirect"; location: string }
+  | { type: "error"; error: SerializedRouteError };
 
 export async function fetchViactRouteState(url: string): Promise<RouteStateResult> {
   const response = await fetch(url, {
-    headers: { "x-viact-route-state-request": "1" },
+    headers: { "x-viact-route-state-request": "1", "Cache-Control": "no-cache" },
     redirect: "manual",
   });
 
@@ -269,7 +282,18 @@ export async function fetchViactRouteState(url: string): Promise<RouteStateResul
     };
   }
 
-  const json = (await response.json()) as { data: unknown };
+  const json = (await response.json()) as { data?: unknown; error?: SerializedRouteError };
+  if (!response.ok) {
+    if (json.error) {
+      return {
+        error: json.error,
+        type: "error",
+      };
+    }
+
+    throw new Error(`Failed to fetch route state (${response.status})`);
+  }
+
   return {
     data: json.data,
     type: "data",
@@ -407,92 +431,110 @@ export async function handleViactRequest<TContext>(
     return actionResultToResponse(actionResult);
   }
 
-  // --- Execute loader ---
-  const loaderResult = routeModule?.loader ? await routeModule.loader(routeArgs) : undefined;
+  let shellModule: ShellModule | undefined;
 
-  // Allow loaders to return a Response directly (e.g. for redirects)
-  if (loaderResult instanceof Response) {
-    return withDefaultSecurityHeaders(loaderResult);
-  }
+  try {
+    // --- Execute loader ---
+    const loaderResult = routeModule?.loader ? await routeModule.loader(routeArgs) : undefined;
 
-  const data = loaderResult;
+    // Allow loaders to return a Response directly (e.g. for redirects)
+    if (loaderResult instanceof Response) {
+      return withDefaultSecurityHeaders(loaderResult);
+    }
 
-  // --- Route state request (client navigation): return JSON ---
-  if (isRouteStateRequest) {
-    return withDefaultSecurityHeaders(Response.json({ data }));
-  }
+    const data = loaderResult;
 
-  // --- Load shell module ---
-  const shellModule = match.route.shellFile
-    ? await resolveRegistryModule<ShellModule>(registry.shellModules, match.route.shellFile)
-    : undefined;
+    // --- Route state request (client navigation): return JSON ---
+    if (isRouteStateRequest) {
+      return withDefaultSecurityHeaders(Response.json({ data }));
+    }
 
-  // --- Merge head metadata ---
-  const head = await mergeHeadMetadata(shellModule, routeModule, routeArgs, data);
+    // --- Load shell module ---
+    shellModule = match.route.shellFile
+      ? await resolveRegistryModule<ShellModule>(registry.shellModules, match.route.shellFile)
+      : undefined;
 
-  const cssUrls = resolvePageCssUrls(options, match.route.shellFile, match.route.file);
+    // --- Merge head metadata ---
+    const head = await mergeHeadMetadata(shellModule, routeModule, routeArgs, data);
 
-  // --- SPA mode: shell HTML with empty body, no SSR ---
-  if (match.route.render === "spa") {
+    const cssUrls = resolvePageCssUrls(options, match.route.shellFile, match.route.file);
+
+    // --- SPA mode: shell HTML with empty body, no SSR ---
+    if (match.route.render === "spa") {
+      return htmlResponse(
+        buildHtmlDocument({
+          head,
+          body: "",
+          hydrationState: {
+            url: url.pathname,
+            routeId: match.route.id ?? "",
+            data: null,
+            error: null,
+          },
+          clientEntryUrl: options.clientEntryUrl,
+          cssUrls,
+        }),
+      );
+    }
+
+    // --- SSR / SSG / ISG: render Preact tree to string ---
+    if (!routeModule?.Component) {
+      return withDefaultSecurityHeaders(
+        new Response("Route has no Component export", {
+          status: 500,
+          headers: { "content-type": "text/plain; charset=utf-8" },
+        }),
+      );
+    }
+
+    const { renderToStringAsync } = await import("preact-render-to-string");
+
+    const Component = routeModule.Component as any;
+    const Shell = shellModule?.Shell;
+    const componentProps = { data, params: match.params };
+
+    const componentTree = Shell
+      ? h(Shell, null, h(Component, componentProps))
+      : h(Component, componentProps);
+
+    const tree = h(
+      ViactRuntimeProvider as any,
+      {
+        data,
+        routeId: match.route.id ?? "",
+        url: url.pathname,
+      },
+      componentTree,
+    );
+    const ssrContent = await renderToStringAsync(tree);
+
     return htmlResponse(
       buildHtmlDocument({
         head,
-        body: "",
+        body: ssrContent,
         hydrationState: {
           url: url.pathname,
           routeId: match.route.id ?? "",
-          data: null,
+          data,
+          error: null,
         },
         clientEntryUrl: options.clientEntryUrl,
         cssUrls,
       }),
     );
-  }
-
-  // --- SSR / SSG / ISG: render Preact tree to string ---
-  if (!routeModule?.Component) {
-    return withDefaultSecurityHeaders(
-      new Response("Route has no Component export", {
-        status: 500,
-        headers: { "content-type": "text/plain; charset=utf-8" },
-      }),
-    );
-  }
-
-  const { renderToStringAsync } = await import("preact-render-to-string");
-
-  const Component = routeModule.Component as any;
-  const Shell = shellModule?.Shell;
-  const componentProps = { data, params: match.params };
-
-  const componentTree = Shell
-    ? h(Shell, null, h(Component, componentProps))
-    : h(Component, componentProps);
-
-  const tree = h(
-    ViactRuntimeProvider as any,
-    {
-      data,
+  } catch (error: unknown) {
+    return renderRouteErrorResponse({
+      error,
+      isRouteStateRequest,
+      options,
+      routeArgs,
       routeId: match.route.id ?? "",
-      url: url.pathname,
-    },
-    componentTree,
-  );
-  const ssrContent = await renderToStringAsync(tree);
-
-  return htmlResponse(
-    buildHtmlDocument({
-      head,
-      body: ssrContent,
-      hydrationState: {
-        url: url.pathname,
-        routeId: match.route.id ?? "",
-        data,
-      },
-      clientEntryUrl: options.clientEntryUrl,
-      cssUrls,
-    }),
-  );
+      routeModule,
+      shellFile: match.route.shellFile,
+      shellModule,
+      urlPathname: url.pathname,
+    });
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -531,6 +573,10 @@ async function useRevalidateResult(
   if (result.type === "redirect") {
     await navigateToClientLocation(result.location);
     return;
+  }
+
+  if (result.type === "error") {
+    throw deserializeRouteError(result.error);
   }
 
   runtime?.setData(result.data);
@@ -582,6 +628,128 @@ function isActionEnvelope(value: unknown): value is ActionEnvelope {
   }
 
   return "headers" in value || "ok" in value || "redirect" in value || "revalidate" in value;
+}
+
+function isViactHttpError(error: unknown): error is ViactHttpError {
+  return error instanceof Error && error.name === "ViactHttpError" && "status" in error;
+}
+
+function normalizeRouteError(error: unknown): SerializedRouteError {
+  if (isViactHttpError(error)) {
+    return {
+      message: error.message,
+      name: error.name,
+      status: typeof error.status === "number" ? error.status : 500,
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      message: error.message || "Internal Server Error",
+      name: error.name || "Error",
+      status: 500,
+    };
+  }
+
+  return {
+    message: "Internal Server Error",
+    name: "Error",
+    status: 500,
+  };
+}
+
+function deserializeRouteError(error: SerializedRouteError): Error {
+  const result = new Error(error.message);
+  result.name = error.name;
+  (result as Error & { status?: number }).status = error.status;
+  return result;
+}
+
+async function renderRouteErrorResponse<TContext>(options: {
+  error: unknown;
+  isRouteStateRequest: boolean;
+  options: HandleViactRequestOptions<TContext>;
+  routeArgs: BaseRouteArgs<TContext>;
+  routeId: string;
+  routeModule: RouteModule | undefined;
+  shellFile: string | undefined;
+  shellModule: ShellModule | undefined;
+  urlPathname: string;
+}): Promise<Response> {
+  const routeError = normalizeRouteError(options.error);
+
+  if (!options.routeModule?.ErrorBoundary) {
+    if (options.isRouteStateRequest) {
+      return withDefaultSecurityHeaders(
+        new Response(JSON.stringify({ error: routeError }), {
+          status: routeError.status,
+          headers: { "content-type": "application/json; charset=utf-8" },
+        }),
+      );
+    }
+
+    const message = routeError.status >= 500 ? "Internal Server Error" : routeError.message;
+    return withDefaultSecurityHeaders(
+      new Response(message, {
+        status: routeError.status,
+        headers: { "content-type": "text/plain; charset=utf-8" },
+      }),
+    );
+  }
+
+  if (options.isRouteStateRequest) {
+    return withDefaultSecurityHeaders(
+      new Response(JSON.stringify({ error: routeError }), {
+        status: routeError.status,
+        headers: { "content-type": "application/json; charset=utf-8" },
+      }),
+    );
+  }
+
+  const shellModule =
+    options.shellModule ??
+    (options.shellFile
+      ? await resolveRegistryModule<ShellModule>(
+          options.options.registry?.shellModules,
+          options.shellFile,
+        )
+      : undefined);
+  const head = shellModule?.head ? await shellModule.head(options.routeArgs) : {};
+  const cssUrls = resolvePageCssUrls(options.options, options.shellFile, options.routeArgs.route.file);
+  const { renderToStringAsync } = await import("preact-render-to-string");
+
+  const ErrorBoundary = options.routeModule.ErrorBoundary as any;
+  const Shell = shellModule?.Shell;
+  const errorValue = deserializeRouteError(routeError);
+  const componentTree = Shell
+    ? h(Shell, null, h(ErrorBoundary, { error: errorValue }))
+    : h(ErrorBoundary, { error: errorValue });
+  const tree = h(
+    ViactRuntimeProvider as any,
+    {
+      data: null,
+      routeId: options.routeId,
+      url: options.urlPathname,
+    },
+    componentTree,
+  );
+  const body = await renderToStringAsync(tree);
+
+  return htmlResponse(
+    buildHtmlDocument({
+      head,
+      body,
+      hydrationState: {
+        url: options.urlPathname,
+        routeId: options.routeId,
+        data: null,
+        error: routeError,
+      },
+      clientEntryUrl: options.options.clientEntryUrl,
+      cssUrls,
+    }),
+    routeError.status,
+  );
 }
 
 function actionResultToResponse(actionResult: unknown): Response {
@@ -756,9 +924,10 @@ function buildHtmlDocument(options: {
 </html>`;
 }
 
-function htmlResponse(html: string): Response {
+function htmlResponse(html: string, status = 200): Response {
   return withDefaultSecurityHeaders(
     new Response(html, {
+      status,
       headers: { "content-type": "text/html; charset=utf-8" },
     }),
   );
@@ -866,6 +1035,9 @@ export interface PrerenderAppOptions {
   app: ViactApp;
   registry?: ModuleRegistry;
   clientEntryUrl?: string;
+  /** Per-source-file CSS map produced by the vite plugin (preferred over cssUrls). */
+  cssManifest?: Record<string, string[]>;
+  /** @deprecated Pass cssManifest instead for per-page CSS resolution. */
   cssUrls?: string[];
 }
 
@@ -895,7 +1067,7 @@ export async function prerenderApp(
         request,
         registry: options.registry,
         clientEntryUrl: options.clientEntryUrl,
-        cssUrls: options.cssUrls,
+        cssManifest: options.cssManifest,
       });
 
       if (response.status !== 200) {

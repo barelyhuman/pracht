@@ -27,12 +27,12 @@ export interface NodeAdapterOptions<TContext = unknown> {
   isgManifest?: Record<string, ISGManifestEntry>;
   apiRoutes?: ResolvedApiRoute[];
   clientEntryUrl?: string;
+  cssUrls?: string[];
   cssManifest?: Record<string, string[]>;
   createContext?: (args: NodeAdapterContextArgs) => TContext | Promise<TContext>;
 }
 
 export interface NodeServerEntryModuleOptions {
-  appImportPath?: string;
   port?: number;
 }
 
@@ -131,7 +131,7 @@ async function regenerateISGPage<TContext>(
     registry: options.registry,
     request,
     clientEntryUrl: options.clientEntryUrl,
-    cssUrls: options.cssUrls,
+    cssManifest: options.cssManifest,
   });
 
   if (response.status === 200) {
@@ -142,17 +142,40 @@ async function regenerateISGPage<TContext>(
 }
 
 export function createNodeServerEntryModule(options: NodeServerEntryModuleOptions = {}): string {
-  const appImportPath = options.appImportPath ?? "/src/routes.ts";
   const port = options.port ?? 3000;
 
   return [
+    'import { existsSync, readFileSync } from "node:fs";',
     'import { createServer } from "node:http";',
+    'import { dirname, resolve } from "node:path";',
+    'import { fileURLToPath, pathToFileURL } from "node:url";',
     'import { createNodeRequestHandler } from "@viact/adapter-node";',
-    `import { app } from ${JSON.stringify(appImportPath)};`,
     "",
-    "const handler = createNodeRequestHandler({ app });",
-    "const server = createServer(handler);",
-    `server.listen(${port});`,
+    'const serverDir = dirname(fileURLToPath(import.meta.url));',
+    'const staticDir = resolve(serverDir, "../client");',
+    'const isgManifestPath = resolve(serverDir, "isg-manifest.json");',
+    'const isgManifest = existsSync(isgManifestPath)',
+    '  ? JSON.parse(readFileSync(isgManifestPath, "utf-8"))',
+    '  : {};',
+    "",
+    "export const handler = createNodeRequestHandler({",
+    "  app: resolvedApp,",
+    "  registry,",
+    "  staticDir,",
+    "  isgManifest,",
+    "  apiRoutes,",
+    "  clientEntryUrl: clientEntryUrl ?? undefined,",
+    "  cssManifest,",
+    "});",
+    "",
+    "const entryHref = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;",
+    'if (entryHref && import.meta.url === entryHref) {',
+    '  const server = createServer(handler);',
+    `  const port = Number(process.env.PORT ?? ${port});`,
+    '  server.listen(port, () => {',
+    '    console.log(`viact node server listening on http://localhost:${port}`);',
+    '  });',
+    "}",
     "",
   ].join("\n");
 }

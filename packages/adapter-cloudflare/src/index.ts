@@ -100,7 +100,11 @@ export function createCloudflareServerEntryModule(
     "  }",
     "",
     "  const response = await assets.fetch(request);",
-    "  return response.status === 404 ? null : response;",
+    "  if (response.status === 404) return null;",
+    "  // Vary on the route-state header so the CDN caches HTML and JSON responses separately",
+    "  const headers = new Headers(response.headers);",
+    "  headers.append('Vary', 'x-viact-route-state-request');",
+    "  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });",
     "}",
     "",
     "async function fetch(request, env, executionContext) {",
@@ -145,7 +149,11 @@ async function maybeServeAsset(
   }
 
   const response = await assets.fetch(request);
-  return response.status === 404 ? null : response;
+  if (response.status === 404) return null;
+  // Vary on the route-state header so the CDN caches HTML and JSON responses separately
+  const headers = new Headers(response.headers);
+  headers.append("Vary", "x-viact-route-state-request");
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
 function isFetcher(value: unknown): value is CloudflareFetcher {

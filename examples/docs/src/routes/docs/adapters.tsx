@@ -68,8 +68,11 @@ export default defineConfig({
     assets/
     index.html     // SSG pages
   server/
-    server.js      // Worker bundle
-    wrangler.json  // auto-generated wrangler config`} />
+    server.js      // Worker bundle`} />
+      <p>
+        Keep your <code>wrangler.jsonc</code> in the project root so you can add
+        bindings without the build overwriting them.
+      </p>
 
       <h3>Accessing Cloudflare bindings</h3>
       <p>
@@ -87,7 +90,6 @@ export async function loader({ context }: LoaderArgs) {
 
       <h3>Deploy</h3>
       <CodeBlock code={`viact build
-cd dist/server
 npx wrangler deploy`} />
 
       <div class="doc-sep" />
@@ -122,7 +124,9 @@ npx vercel deploy --prebuilt`} />
       <h2>Node.js</h2>
       <p>
         Run viact as a standard Node.js HTTP server. The adapter handles static
-        file serving, ISG stale-while-revalidate, and request translation.
+        file serving, ISG stale-while-revalidate, request translation, and the
+        generated <code>dist/server/server.js</code> entry boots the production
+        server directly.
       </p>
 
       <h3>Setup</h3>

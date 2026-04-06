@@ -6,7 +6,7 @@ import type { VNode } from "preact";
 import { matchAppRoute } from "./app.ts";
 import type { ResolvedViactApp, RouteMatch } from "./types.ts";
 import { fetchViactRouteState, ViactRuntimeProvider } from "./runtime.ts";
-import type { ViactHydrationState } from "./runtime.ts";
+import type { SerializedRouteError, ViactHydrationState } from "./runtime.ts";
 
 declare global {
   interface Window {
@@ -41,11 +41,13 @@ export async function initClientRouter(options: InitClientRouterOptions): Promis
   // Build a Preact VNode tree for a matched route
   // ------------------------------------------------------------------
 
-  async function buildRouteTree(match: RouteMatch, data: unknown): Promise<VNode<any> | null> {
+  async function buildRouteTree(
+    match: RouteMatch,
+    state: { data: unknown; error?: SerializedRouteError | null },
+  ): Promise<VNode<any> | null> {
     const routeKey = findModuleKey(routeModules, match.route.file);
     if (!routeKey) return null;
     const routeMod = await routeModules[routeKey]();
-    if (!routeMod.Component) return null;
 
     let Shell: any = null;
     if (match.route.shellFile) {
@@ -56,8 +58,12 @@ export async function initClientRouter(options: InitClientRouterOptions): Promis
       }
     }
 
-    const Component = routeMod.Component;
-    const props = { data, params: match.params };
+    const Component = (state.error ? routeMod.ErrorBoundary : routeMod.Component) as any;
+    if (!Component) return null;
+
+    const props: Record<string, unknown> = state.error
+      ? { error: deserializeRouteError(state.error) }
+      : { data: state.data, params: match.params };
     const componentTree = Shell ? h(Shell, null, h(Component, props)) : h(Component, props);
 
     return h(
@@ -66,7 +72,7 @@ export async function initClientRouter(options: InitClientRouterOptions): Promis
       h(
         ViactRuntimeProvider as any,
         {
-          data,
+          data: state.data,
           routeId: match.route.id ?? "",
           url: match.pathname,
         },
@@ -91,7 +97,10 @@ export async function initClientRouter(options: InitClientRouterOptions): Promis
     }
 
     // Fetch route state from server
-    let data: unknown;
+    let state: { data: unknown; error?: SerializedRouteError | null } = {
+      data: undefined,
+      error: null,
+    };
     try {
       const result = await fetchViactRouteState(to);
       if (result.type === "redirect") {
@@ -103,7 +112,17 @@ export async function initClientRouter(options: InitClientRouterOptions): Promis
         return;
       }
 
-      data = result.data;
+      if (result.type === "error") {
+        state = {
+          data: undefined,
+          error: result.error,
+        };
+      } else {
+        state = {
+          data: result.data,
+          error: null,
+        };
+      }
     } catch {
       // Network error — full page load as fallback
       window.location.href = to;
@@ -120,10 +139,12 @@ export async function initClientRouter(options: InitClientRouterOptions): Promis
     }
 
     // Render the new route
-    const tree = await buildRouteTree(match, data);
+    const tree = await buildRouteTree(match, state);
     if (tree) {
       render(tree, root);
       window.scrollTo(0, 0);
+    } else {
+      window.location.href = to;
     }
   }
 
@@ -133,9 +154,12 @@ export async function initClientRouter(options: InitClientRouterOptions): Promis
 
   const initialMatch = matchAppRoute(app, options.initialState.url);
   if (initialMatch) {
-    let initialData = options.initialState.data;
+    let state = {
+      data: options.initialState.data,
+      error: options.initialState.error ?? null,
+    };
 
-    if (initialMatch.route.render === "spa" && initialData == null) {
+    if (initialMatch.route.render === "spa" && state.data == null && !state.error) {
       try {
         const result = await fetchViactRouteState(options.initialState.url);
         if (result.type === "redirect") {
@@ -143,14 +167,24 @@ export async function initClientRouter(options: InitClientRouterOptions): Promis
           return;
         }
 
-        initialData = result.data;
+        if (result.type === "error") {
+          state = {
+            data: undefined,
+            error: result.error,
+          };
+        } else {
+          state = {
+            data: result.data,
+            error: null,
+          };
+        }
       } catch {
         window.location.href = options.initialState.url;
         return;
       }
     }
 
-    const tree = await buildRouteTree(initialMatch, initialData);
+    const tree = await buildRouteTree(initialMatch, state);
     if (tree) {
       if (initialMatch.route.render === "spa") {
         render(tree, root);
@@ -210,4 +244,11 @@ export async function initClientRouter(options: InitClientRouterOptions): Promis
 
   window.__VIACT_NAVIGATE__ = navigate;
   window.__VIACT_ROUTER_READY__ = true;
+}
+
+function deserializeRouteError(error: SerializedRouteError): Error {
+  const result = new Error(error.message);
+  result.name = error.name;
+  (result as Error & { status?: number }).status = error.status;
+  return result;
 }

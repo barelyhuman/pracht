@@ -105,13 +105,38 @@ async function build() {
 
     const clientEntry = viteManifest["virtual:viact/client"];
     const clientEntryUrl = clientEntry ? `/${clientEntry.file}` : undefined;
-    const cssUrls = (clientEntry?.css ?? []).map((f) => `/${f}`);
+
+    // Build per-source-file CSS manifest by walking static imports transitively.
+    // This ensures each page gets only the CSS it actually needs.
+    function collectTransitiveCss(key) {
+      const css = new Set();
+      const visited = new Set();
+      function collect(k) {
+        if (visited.has(k)) return;
+        visited.add(k);
+        const entry = viteManifest[k];
+        if (!entry) return;
+        for (const c of entry.css ?? []) css.add(c);
+        for (const imp of entry.imports ?? []) collect(imp);
+      }
+      collect(key);
+      return [...css];
+    }
+
+    const cssManifest = {};
+    for (const [key, entry] of Object.entries(viteManifest)) {
+      if (!entry.src) continue;
+      const css = collectTransitiveCss(key);
+      if (css.length > 0) {
+        cssManifest[key] = css.map((f) => `/${f}`);
+      }
+    }
 
     const { pages, isgManifest } = await prerenderApp({
       app: serverMod.resolvedApp,
       registry: serverMod.registry,
       clientEntryUrl,
-      cssUrls,
+      cssManifest,
       withISGManifest: true,
     });
 
