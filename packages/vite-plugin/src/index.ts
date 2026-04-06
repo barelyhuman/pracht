@@ -8,6 +8,23 @@ export const VIACT_SERVER_MODULE_ID = "virtual:viact/server";
 // scheme by browsers, so we serve the client module from a plain path.
 const CLIENT_BROWSER_PATH = "/@viact/client.js";
 
+// Vite 8's SSR build prepends the project root to entry IDs before calling
+// resolveId, so we may receive "/abs/path/virtual:viact/server" instead of
+// just "virtual:viact/server".  These helpers match both forms.
+function isClientModule(id: string): boolean {
+  return (
+    id === VIACT_CLIENT_MODULE_ID ||
+    id === CLIENT_BROWSER_PATH ||
+    id.endsWith(VIACT_CLIENT_MODULE_ID)
+  );
+}
+
+function isServerModule(id: string): boolean {
+  return (
+    id === VIACT_SERVER_MODULE_ID || id.endsWith(VIACT_SERVER_MODULE_ID)
+  );
+}
+
 export interface ViactPluginOptions {
   appFile?: string;
   routesDir?: string;
@@ -34,21 +51,16 @@ export function viact(options: ViactPluginOptions = {}): Plugin {
     },
 
     resolveId(id) {
-      if (
-        id === VIACT_CLIENT_MODULE_ID ||
-        id === CLIENT_BROWSER_PATH ||
-        id === VIACT_SERVER_MODULE_ID
-      ) {
-        return id;
-      }
+      if (isClientModule(id)) return VIACT_CLIENT_MODULE_ID;
+      if (isServerModule(id)) return VIACT_SERVER_MODULE_ID;
       return null;
     },
 
     load(id) {
-      if (id === VIACT_CLIENT_MODULE_ID || id === CLIENT_BROWSER_PATH) {
+      if (isClientModule(id)) {
         return createViactClientModuleSource(resolved);
       }
-      if (id === VIACT_SERVER_MODULE_ID) {
+      if (isServerModule(id)) {
         return createViactServerModuleSource(resolved);
       }
       return null;

@@ -168,7 +168,7 @@ SSR and SSG, deployed to Node. Thoroughly tested with Playwright E2E tests.
 ## Phase 3 — Polish
 
 - Streaming SSR
-- `adapter-deno`
+- `adapter-cloudflare`
 - Advanced prefetching strategies
 - Route-level code splitting optimizations
 - Error overlay in dev

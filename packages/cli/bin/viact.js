@@ -1,4 +1,4 @@
-#!/usr/bin/env node --experimental-strip-types
+#!/usr/bin/env node
 
 import { createServer as createHttpServer } from "node:http";
 import { resolve, join, extname } from "node:path";
@@ -52,6 +52,7 @@ async function build() {
     root: process.cwd(),
     build: {
       outDir: "dist/client",
+      manifest: true,
       rollupOptions: {
         input: "virtual:viact/client",
       },
@@ -74,7 +75,7 @@ async function build() {
 async function preview() {
   const root = process.cwd();
   const clientDir = resolve(root, "dist/client");
-  const serverEntry = resolve(root, "dist/server/virtual_viact_server.js");
+  const serverEntry = resolve(root, "dist/server/server.js");
 
   if (!existsSync(serverEntry)) {
     console.error(

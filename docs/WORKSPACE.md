@@ -49,13 +49,15 @@ This repo now has the first pass of the Phase 1 monorepo layout described in
 The current loop is runnable end-to-end. The next priorities are:
 
 1. Production build output verification — confirm the `viact build` + `viact
-   preview` pipeline produces working client/server bundles.
-2. Client-side navigation — implement the client router that intercepts link
-   clicks, fetches route-state JSON, and updates the Preact tree without a full
-   page reload.
-3. SSG prerendering — run loaders and render static HTML to disk at build time
-   for routes with `render: "ssg"`.
+   preview` pipeline produces working client/server bundles. The virtual module
+   entry names may not resolve correctly through Rolldown's output.
+2. Client-side navigation — implement the client router that intercepts `<a>`
+   clicks, fetches route-state JSON, and swaps the Preact tree without a full
+   page reload. This is the biggest user-facing gap.
+3. SSG prerendering — the Vite plugin needs a build hook that calls `prerender()`
+   on each `render: "ssg"` route, runs loaders, and writes static HTML files to
+   `dist/client/<path>/index.html`.
 4. ISG revalidation — implement time-based revalidation in the Node adapter
-   using file modification timestamps.
+   using file mtime checks against the route's `revalidate.seconds`.
 5. HMR — ensure route/shell/middleware module changes propagate via Vite's HMR
-   without a full reload.
+   without a full page reload.

@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "pnpm typecheck && pnpm test",
+    "build": "pnpm -r --filter='./packages/*' --filter='!@viact/cli' run build",
+    "check": "pnpm build && pnpm typecheck && pnpm test",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "viact": "node ./packages/cli/bin/viact.js",
@@ -23,6 +24,7 @@
     "oxlint": "^1.58.0",
     "preact": "^10.26.9",
     "preact-render-to-string": "^6.5.13",
+    "tsdown": "^0.21.7",
     "typescript": "^5.8.3",
     "vite": "^8.0.0",
     "vitest": "^3.2.4"
