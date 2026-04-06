@@ -150,7 +150,6 @@ SSR and SSG, deployed to Node. Thoroughly tested with Playwright E2E tests.
 - API routes (Phase 2)
 - Cloudflare / Vercel / Deno adapters (Phase 2)
 - Claude Code skills (Phase 2)
-- Streaming SSR (Phase 3)
 - ISG webhook revalidation (Phase 2)
 
 ---
@@ -166,7 +165,6 @@ SSR and SSG, deployed to Node. Thoroughly tested with Playwright E2E tests.
 
 ## Phase 3 — Polish
 
-- Streaming SSR
 - `adapter-cloudflare`
 - Advanced prefetching strategies
 - Route-level code splitting optimizations
