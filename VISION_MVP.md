@@ -1,0 +1,209 @@
+# Viact — Vision & MVP
+
+Viact is a full-stack Preact framework built on Vite. It draws routing and rendering
+architecture from [plyon](../plyon) and extends it with API routes, deployment
+adapters, and Claude Code skills for framework operation.
+
+---
+
+## Core Principles
+
+1. **Preact-first** — lightweight by default; ship less JavaScript to the client.
+2. **Vite-native** — leverage Vite's dev server, HMR, and multi-environment builds.
+3. **Explicit over magic** — hybrid routing (file modules + manifest config) so
+   developers always know what runs where.
+4. **Deploy anywhere** — platform adapters isolate runtime differences; one codebase
+   targets Cloudflare Workers, Vercel, Node, Deno, etc.
+5. **AI-assisted** — Claude Code skills for scaffolding, debugging, and operating
+   the framework.
+6. **Proven by tests** — thorough E2E testing (Playwright) to prove SSR, SSG, ISG,
+   SPA, and client navigation actually work in production scenarios.
+7. **Instant local DX** — one command to start, instant HMR, zero config. Hit a
+   button and you're rolling.
+
+---
+
+## Feature Overview
+
+### Routing (from plyon)
+
+- **Hybrid file-based routing**: route modules live in `src/routes/`, wired via an
+  explicit `src/routes.ts` manifest using `defineApp()`, `route()`, `group()`.
+- **Dynamic segments**: `:param` syntax, catch-all segments.
+- **Shells**: named layout wrappers (e.g. `public`, `app`) decoupled from URL
+  structure; assigned per route or group.
+- **Middleware**: named middleware defined in `src/middleware/`, applied per route
+  or group; runs server-side before loaders.
+- **Route groups**: inherit shell, middleware, render mode, and path prefix.
+
+### Rendering Modes
+
+Per-route render mode via `{ render: "spa" | "ssr" | "ssg" | "isg" }`:
+
+| Mode | When HTML is generated | Use case |
+|------|----------------------|----------|
+| SPA  | Client only          | Dashboards, auth-gated UI |
+| SSR  | Every request        | Personalized / dynamic pages |
+| SSG  | Build time           | Marketing, docs, blog |
+| ISG  | Build + revalidation | Pricing, catalog, semi-static |
+
+ISG supports time-based and webhook-based revalidation policies.
+
+### Data Loading
+
+- **Loaders**: `export function loader(args)` — runs at build (SSG), request (SSR),
+  or client navigation time. Returns typed, serializable data.
+- **Actions**: `export function action(args)` — handles POST/PUT/PATCH/DELETE.
+  Returns data, redirects, or revalidation hints.
+- **Head**: `export function head(args)` — per-route `<head>` metadata merged with
+  shell-level head.
+- **Client hooks**: `useRouteData()`, `useRevalidateRoute()`, `useSubmitAction()`,
+  `<Form>` component.
+
+### API Routes
+
+Standalone server endpoints independent of the page rendering pipeline:
+
+- Defined in `src/api/` with file-based path mapping (e.g. `src/api/health.ts` → `/api/health`).
+- Export named HTTP method handlers: `export function GET(args)`, `POST(args)`, etc.
+- Receive the same `LoaderArgs`-style context (request, params, context, signal).
+- Return `Response` objects directly — full control over status, headers, body.
+- Middleware applies via the route manifest or dedicated API middleware config.
+
+### Deployment Adapters
+
+Platform adapters export a request handler shaped for their runtime:
+
+| Adapter | Runtime | Notes |
+|---------|---------|-------|
+| `adapter-node` | Node.js `http` | Static file serving, ISG mtime check |
+| `adapter-cloudflare` | Workers `fetch` | `env.ASSETS`, KV, execution context |
+| `adapter-vercel` | Serverless / Edge | (planned) |
+| `adapter-deno` | Deno.serve | (planned) |
+
+Each adapter:
+- Converts platform request → Web `Request`
+- Loads Vite manifests for asset injection
+- Implements ISG revalidation for its platform's storage
+- Generates a platform-specific entry module via the Vite plugin
+
+### Skills (Claude Code)
+
+Built-in Claude Code skills for framework developers:
+
+- **Scaffold**: generate routes, shells, middleware, API routes with correct wiring
+- **Debug**: framework-aware debugging (route matching, loader errors, hydration)
+- **Deploy**: guided adapter setup and deployment
+- **Migrate**: upgrade paths between versions
+
+---
+
+## MVP Scope — Phase 1
+
+Phase 1 delivers a working framework that can build and serve a Preact app with
+SSR and SSG, deployed to Node. Thoroughly tested with Playwright E2E tests.
+
+### Phase 1 Deliverables
+
+1. **`packages/framework`** — core exports
+   - `defineApp()`, `route()`, `group()` — route manifest API
+   - `RouteModule` type — loader, action, head, Component, errorBoundary
+   - `ShellModule` type — layout wrapper with head contribution
+   - `MiddlewareModule` type — server-side request interceptor
+   - Router: `matchAppRoute()` segment-based matching
+   - Server renderer: `handleViactRequest()` → full HTML with hydration state
+   - Client runtime: `startApp()`, hydration, client-side navigation, prefetch
+   - Hooks: `useRouteData()`, `useRevalidateRoute()`, `useSubmitAction()`, `<Form>`
+
+2. **`packages/vite-plugin`** — Vite integration
+   - Virtual modules: `virtual:viact/client`, `virtual:viact/server`
+   - Multi-environment build (client + ssr)
+   - `import.meta.glob()` module registry generation
+   - SSG prerendering at build time (concurrent, configurable)
+   - Dev server with HMR
+
+3. **`packages/adapter-node`** — Node.js adapter
+   - `createNodeRequestHandler()` — Web Request/Response over `http`
+   - Static file serving from `dist/client/`
+   - Vite manifest loading for asset injection
+   - ISG time-window revalidation
+
+4. **`packages/cli`** — developer tooling (instant local DX)
+   - `viact dev` — one command, instant Vite dev server with HMR
+   - `viact build` — production build with clear output
+   - `viact preview` — preview production build locally
+   - Zero config to start — sensible defaults, override when needed
+   - Fast feedback loop: save a file → see the change instantly
+
+5. **Example app** — demonstrates SSR + SSG routes, shells, loaders, actions
+
+6. **E2E tests** — Playwright tests proving:
+   - SSR renders correct HTML on the server
+   - SSG generates static files at build time
+   - Client-side navigation works without full page reload
+   - Loaders return correct data
+   - Actions handle form submissions
+   - Shells wrap routes correctly
+   - Hydration completes without errors
+
+### Phase 1 Non-Goals
+
+- API routes (Phase 2)
+- Cloudflare / Vercel / Deno adapters (Phase 2)
+- Claude Code skills (Phase 2)
+- Streaming SSR (Phase 3)
+- ISG webhook revalidation (Phase 2)
+
+---
+
+## Phase 2 — Expand
+
+- API routes (`src/api/`)
+- `adapter-cloudflare` with Workers, KV, ISG
+- `adapter-vercel` with serverless + edge functions
+- ISG webhook revalidation
+- Claude Code skills for scaffolding, debugging, deploying
+- `create-viact` starter CLI
+
+## Phase 3 — Polish
+
+- Streaming SSR
+- `adapter-deno`
+- Advanced prefetching strategies
+- Route-level code splitting optimizations
+- Error overlay in dev
+- Documentation website (self-hosted on viact)
+
+---
+
+## Monorepo Structure
+
+```
+viact/
+  packages/
+    framework/        # Core: routing, rendering, runtime, types
+    vite-plugin/      # Vite integration, virtual modules, build
+    adapter-node/     # Node.js server adapter
+    adapter-cloudflare/  # (Phase 2)
+    cli/              # Dev/build/preview commands
+    create-viact/     # (Phase 2) Starter scaffolding
+  example/            # Working example app
+  docs/               # Architecture and design docs
+  e2e/                # Playwright end-to-end tests
+```
+
+---
+
+## Key Design Decisions
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for detailed rationale.
+
+1. **Hybrid routing over pure file-based** — explicit manifest avoids hidden
+   conventions and enables shell/middleware grouping without directory nesting.
+2. **Per-route render modes** — no global default; each route declares its strategy.
+3. **Server-owned navigation** — client fetches route state JSON from server rather
+   than running loaders in the browser; keeps secrets server-side.
+4. **Virtual module generation** — Vite plugin generates entry points from
+   `import.meta.glob()`, avoiding manual registration.
+5. **Adapter pattern** — platform logic isolated from core; adapters are thin
+   request/response translators.
