@@ -145,7 +145,7 @@ The adapter handles everything — just declare bindings in `wrangler.jsonc`:
 {
   "main": "dist/server/server.js",
   "kv_namespaces": [{ "binding": "MY_KV", "id": "..." }],
-  "d1_databases": [{ "binding": "DB", "database_name": "my-db", "database_id": "..." }]
+  "d1_databases": [{ "binding": "DB", "database_name": "my-db", "database_id": "..." }],
 }
 ```
 

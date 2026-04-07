@@ -93,13 +93,10 @@ export function createVercelServerEntryModule(
  * viact({ adapter: vercelAdapter() })
  * ```
  */
-export function vercelAdapter(
-  options: VercelServerEntryModuleOptions = {},
-): ViactAdapter {
+export function vercelAdapter(options: VercelServerEntryModuleOptions = {}): ViactAdapter {
   return {
     id: "vercel",
-    serverImports:
-      'import { handleViactRequest, resolveApp, resolveApiRoutes } from "viact";',
+    serverImports: 'import { handleViactRequest, resolveApp, resolveApiRoutes } from "viact";',
     createServerEntryModule() {
       return createVercelServerEntryModule(options);
     },

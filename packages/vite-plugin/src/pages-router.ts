@@ -153,10 +153,7 @@ export function generatePagesManifestSource(
     (f) => basename(f, extname(f)) === "_app" && PAGE_EXTENSIONS.has(extname(f)),
   );
 
-  const lines: string[] = [
-    'import { defineApp, group, route } from "viact";',
-    "",
-  ];
+  const lines: string[] = ['import { defineApp, group, route } from "viact";', ""];
 
   const routeEntries: string[] = [];
 
@@ -221,14 +218,20 @@ function scanAllFiles(dir: string): string[] {
 // Physical routes file generation (CLI eject)
 // ---------------------------------------------------------------------------
 
-export function generateRoutesFile(pagesDir: string, outputPath: string, options: PagesRouterOptions): void {
+export function generateRoutesFile(
+  pagesDir: string,
+  outputPath: string,
+  options: PagesRouterOptions,
+): void {
   const pages = scanPagesDirectory(pagesDir);
   // For standalone files, replace `const app` with `export const app`
-  const manifestSource = generatePagesManifestSource(pages, options)
-    .replace("const app = defineApp(", "export const app = defineApp(");
+  const manifestSource = generatePagesManifestSource(pages, options).replace(
+    "const app = defineApp(",
+    "export const app = defineApp(",
+  );
   const source = [
     "// Auto-generated from pages/ directory by @viact/vite-plugin.",
-    '// Customize this file and remove `pagesDir` from viact config to use it directly.',
+    "// Customize this file and remove `pagesDir` from viact config to use it directly.",
     "",
     manifestSource,
   ].join("\n");

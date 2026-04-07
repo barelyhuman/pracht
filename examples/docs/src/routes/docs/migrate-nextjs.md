@@ -11,17 +11,17 @@ prev:
 
 Next.js and viact share many of the same concepts — server rendering, file-based conventions, loaders, middleware — but viact takes a more explicit approach. This guide walks through the key differences so you can migrate incrementally.
 
-| Concept | Next.js (App Router) | viact |
-|---------|---------------------|-------|
-| UI library | React | Preact |
-| Bundler | Turbopack / Webpack | Vite |
-| Routing | File-system conventions | Explicit manifest (`src/routes.ts`) |
-| Layouts | `layout.tsx` nesting | Named shells |
-| Data fetching | `async` Server Components, `fetch` | `loader` / `action` exports |
-| Rendering modes | Per-segment (`dynamic`, `revalidate`) | Per-route (`ssg`, `ssr`, `isg`, `spa`) |
-| Middleware | Single `middleware.ts` at root | Named middleware, per-route or per-group |
-| API routes | `app/api/**/route.ts` | `src/api/**/*.ts` |
-| Deployment | Vercel-first | Adapter-based (Node, Cloudflare, Vercel) |
+| Concept         | Next.js (App Router)                  | viact                                    |
+| --------------- | ------------------------------------- | ---------------------------------------- |
+| UI library      | React                                 | Preact                                   |
+| Bundler         | Turbopack / Webpack                   | Vite                                     |
+| Routing         | File-system conventions               | Explicit manifest (`src/routes.ts`)      |
+| Layouts         | `layout.tsx` nesting                  | Named shells                             |
+| Data fetching   | `async` Server Components, `fetch`    | `loader` / `action` exports              |
+| Rendering modes | Per-segment (`dynamic`, `revalidate`) | Per-route (`ssg`, `ssr`, `isg`, `spa`)   |
+| Middleware      | Single `middleware.ts` at root        | Named middleware, per-route or per-group |
+| API routes      | `app/api/**/route.ts`                 | `src/api/**/*.ts`                        |
+| Deployment      | Vercel-first                          | Adapter-based (Node, Cloudflare, Vercel) |
 
 ---
 
@@ -69,17 +69,15 @@ import { defineApp, group, route } from "viact";
 export const app = defineApp({
   shells: {
     public: "./shells/public.tsx",
-    auth:   "./shells/auth.tsx",
+    auth: "./shells/auth.tsx",
   },
   routes: [
     group({ shell: "public" }, [
-      route("/",           "./routes/home.tsx",      { render: "ssg" }),
-      route("/about",      "./routes/about.tsx",     { render: "ssg" }),
+      route("/", "./routes/home.tsx", { render: "ssg" }),
+      route("/about", "./routes/about.tsx", { render: "ssg" }),
       route("/blog/:slug", "./routes/blog-post.tsx", { render: "ssr" }),
     ]),
-    group({ shell: "auth" }, [
-      route("/login", "./routes/login.tsx", { render: "spa" }),
-    ]),
+    group({ shell: "auth" }, [route("/login", "./routes/login.tsx", { render: "spa" })]),
   ],
 });
 ```
@@ -88,11 +86,11 @@ export const app = defineApp({
 
 ### Dynamic Routes
 
-| Next.js | viact |
-|---------|-------|
-| `[slug]` folder | `:slug` in path |
-| `[...slug]` folder | `*` catch-all |
-| `(group)` folder | `group()` call |
+| Next.js            | viact           |
+| ------------------ | --------------- |
+| `[slug]` folder    | `:slug` in path |
+| `[...slug]` folder | `*` catch-all   |
+| `(group)` folder   | `group()` call  |
 
 ---
 
@@ -104,7 +102,9 @@ Next.js uses `layout.tsx` files that nest based on folder structure. viact uses 
 // Next.js — app/layout.tsx
 export default function RootLayout({ children }) {
   return (
-    <html><body>{children}</body></html>
+    <html>
+      <body>{children}</body>
+    </html>
   );
 }
 ```
@@ -115,7 +115,9 @@ import type { ShellProps } from "viact";
 
 export function Shell({ children }: ShellProps) {
   return (
-    <html><body>{children}</body></html>
+    <html>
+      <body>{children}</body>
+    </html>
   );
 }
 
@@ -138,7 +140,11 @@ Next.js uses async Server Components that `fetch` data inline. viact separates d
 // Next.js — app/blog/[slug]/page.tsx
 export default async function BlogPost({ params }) {
   const post = await db.posts.find(params.slug);
-  return <article><h1>{post.title}</h1></article>;
+  return (
+    <article>
+      <h1>{post.title}</h1>
+    </article>
+  );
 }
 ```
 
@@ -154,7 +160,11 @@ export async function loader({ params }: LoaderArgs) {
 
 export default function BlogPost() {
   const { post } = useRouteData<typeof loader>();
-  return <article><h1>{post.title}</h1></article>;
+  return (
+    <article>
+      <h1>{post.title}</h1>
+    </article>
+  );
 }
 ```
 
@@ -225,12 +235,12 @@ export function head({ data }: HeadArgs) {
 
 Next.js controls caching with `export const dynamic` and `revalidate`. viact sets rendering mode per-route in the manifest:
 
-| Next.js | viact | When to use |
-|---------|-------|-------------|
-| `dynamic = "force-static"` | `render: "ssg"` | Content known at build time |
-| `dynamic = "force-dynamic"` | `render: "ssr"` | Personalized or real-time data |
-| `revalidate = 3600` | `render: "isg"` + `timeRevalidate(3600)` | Mostly static, periodic updates |
-| Client component with `"use client"` | `render: "spa"` | Client-only UI (dashboards) |
+| Next.js                              | viact                                    | When to use                     |
+| ------------------------------------ | ---------------------------------------- | ------------------------------- |
+| `dynamic = "force-static"`           | `render: "ssg"`                          | Content known at build time     |
+| `dynamic = "force-dynamic"`          | `render: "ssr"`                          | Personalized or real-time data  |
+| `revalidate = 3600`                  | `render: "isg"` + `timeRevalidate(3600)` | Mostly static, periodic updates |
+| Client component with `"use client"` | `render: "spa"`                          | Client-only UI (dashboards)     |
 
 ```ts [src/routes.ts]
 import { route, timeRevalidate } from "viact";
@@ -238,7 +248,7 @@ import { route, timeRevalidate } from "viact";
 route("/pricing", "./routes/pricing.tsx", {
   render: "isg",
   revalidate: timeRevalidate(3600),
-})
+});
 ```
 
 ---
@@ -273,8 +283,8 @@ export const middleware: MiddlewareFn = async ({ request }) => {
 // Applied to specific routes via the manifest
 group({ middleware: ["auth"], shell: "app" }, [
   route("/dashboard", "./routes/dashboard.tsx", { render: "ssr" }),
-  route("/settings",  "./routes/settings.tsx",  { render: "spa" }),
-])
+  route("/settings", "./routes/settings.tsx", { render: "spa" }),
+]);
 ```
 
 **Advantage:** Multiple named middleware can be composed per-group. No regex matchers — assignment is explicit.
@@ -304,6 +314,7 @@ export async function GET() {
 ```
 
 The main differences:
+
 - viact uses standard `Response` instead of `NextResponse`
 - Files live in `src/api/` instead of `app/api/`
 - No need for route segment config — middleware is applied via `defineApp({ api: { middleware } })`
@@ -325,11 +336,11 @@ export default {
 };
 ```
 
-| Target | Adapter | Notes |
-|--------|---------|-------|
-| Node.js | `@viact/adapter-node` | Express-compatible, ISG revalidation |
-| Cloudflare Workers | `@viact/adapter-cloudflare` | KV, D1, R2 bindings via context |
-| Vercel | `@viact/adapter-vercel` | Edge Functions, Build Output API v3 |
+| Target             | Adapter                     | Notes                                |
+| ------------------ | --------------------------- | ------------------------------------ |
+| Node.js            | `@viact/adapter-node`       | Express-compatible, ISG revalidation |
+| Cloudflare Workers | `@viact/adapter-cloudflare` | KV, D1, R2 bindings via context      |
+| Vercel             | `@viact/adapter-vercel`     | Edge Functions, Build Output API v3  |
 
 ---
 

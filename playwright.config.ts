@@ -7,7 +7,8 @@ export default defineConfig({
   projects: [
     {
       name: "basic",
-      testMatch: /basic\.test\.ts|node-build\.test\.ts|cloudflare-build\.test\.ts|vercel-build\.test\.ts/,
+      testMatch:
+        /basic\.test\.ts|node-build\.test\.ts|cloudflare-build\.test\.ts|vercel-build\.test\.ts/,
       use: {
         baseURL: "http://localhost:3100",
       },

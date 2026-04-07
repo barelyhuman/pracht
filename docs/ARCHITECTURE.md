@@ -151,7 +151,7 @@ route("/dashboard", {
   component: "./routes/dashboard.tsx",
   loader: "./server/dashboard-loader.ts",
   render: "ssr",
-})
+});
 ```
 
 When a separate file is specified, it takes precedence over inline exports in

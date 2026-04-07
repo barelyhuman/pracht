@@ -164,7 +164,6 @@ export interface BaseRouteArgs<TContext = RegisteredContext> {
 
 export interface LoaderArgs<TContext = RegisteredContext> extends BaseRouteArgs<TContext> {}
 
-
 export interface MiddlewareArgs<TContext = RegisteredContext> extends BaseRouteArgs<TContext> {}
 
 export interface HeadMetadata {
@@ -204,12 +203,9 @@ export interface ShellProps {
   children: ComponentChildren;
 }
 
-
-
 export type LoaderFn<TContext = any, TData = unknown> = (
   args: LoaderArgs<TContext>,
 ) => MaybePromise<TData>;
-
 
 export interface RouteModule<TContext = any, TLoader extends LoaderLike = undefined> {
   loader?: LoaderFn<TContext>;

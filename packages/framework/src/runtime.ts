@@ -99,13 +99,16 @@ export function ViactRuntimeProvider<TData>({
     setRouteData(data);
   }, [data, routeId, url]);
 
-  const context = useMemo(() => ({
-    data: routeData,
-    params,
-    routeId,
-    setData: setRouteData as (data: unknown) => void,
-    url,
-  }), [routeData, params, routeId, url]);
+  const context = useMemo(
+    () => ({
+      data: routeData,
+      params,
+      routeId,
+      setData: setRouteData as (data: unknown) => void,
+      url,
+    }),
+    [routeData, params, routeId, url],
+  );
 
   return h(RouteDataContext.Provider, {
     value: context,
@@ -162,7 +165,9 @@ export interface Location {
 }
 
 export function useLocation(): Location {
-  const url = useContext(RouteDataContext)?.url ?? (typeof window !== "undefined" ? window.location.pathname : "/");
+  const url =
+    useContext(RouteDataContext)?.url ??
+    (typeof window !== "undefined" ? window.location.pathname : "/");
   return { pathname: url };
 }
 
@@ -395,11 +400,7 @@ export async function handleViactRequest<TContext>(
   };
 
   // --- Resolve loader from separate data module or route module ---
-  const { loader } = await resolveDataFunctions(
-    match.route,
-    routeModule,
-    registry,
-  );
+  const { loader } = await resolveDataFunctions(match.route, routeModule, registry);
 
   let shellModule: ShellModule | undefined;
 
@@ -671,8 +672,16 @@ async function renderRouteErrorResponse<TContext>(options: {
         )
       : undefined);
   const head = shellModule?.head ? await shellModule.head(options.routeArgs) : {};
-  const cssUrls = resolvePageCssUrls(options.options, options.shellFile, options.routeArgs.route.file);
-  const modulePreloadUrls = resolvePageJsUrls(options.options, options.shellFile, options.routeArgs.route.file);
+  const cssUrls = resolvePageCssUrls(
+    options.options,
+    options.shellFile,
+    options.routeArgs.route.file,
+  );
+  const modulePreloadUrls = resolvePageJsUrls(
+    options.options,
+    options.shellFile,
+    options.routeArgs.route.file,
+  );
   const { renderToStringAsync } = await import("preact-render-to-string");
 
   const ErrorBoundary = options.routeModule.ErrorBoundary as any;
@@ -826,7 +835,14 @@ function buildHtmlDocument(options: {
   cssUrls?: string[];
   modulePreloadUrls?: string[];
 }): string {
-  const { head, body, hydrationState, clientEntryUrl, cssUrls = [], modulePreloadUrls = [] } = options;
+  const {
+    head,
+    body,
+    hydrationState,
+    clientEntryUrl,
+    cssUrls = [],
+    modulePreloadUrls = [],
+  } = options;
 
   const titleTag = head.title ? `<title>${escapeHtml(head.title)}</title>` : "";
 
@@ -1043,4 +1059,3 @@ async function collectSSGPaths(
   const paramSets = await routeModule.getStaticPaths();
   return paramSets.map((params) => buildPathFromSegments(route.segments, params));
 }
-

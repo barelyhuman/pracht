@@ -301,8 +301,7 @@ function appendHydrationWarning(message: string): void {
       alignItems: "center",
       marginBottom: "8px",
     });
-    header.innerHTML =
-      '<strong style="color:#f0ad4e">⚠ Hydration Mismatches</strong>';
+    header.innerHTML = '<strong style="color:#f0ad4e">⚠ Hydration Mismatches</strong>';
 
     const close = document.createElement("button");
     close.textContent = "×";

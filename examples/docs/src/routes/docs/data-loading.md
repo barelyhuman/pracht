@@ -38,24 +38,24 @@ export function Component({ data }: RouteComponentProps<typeof loader>) {
 
 ### LoaderArgs
 
-| Field | Type | Description |
-|-------|------|-------------|
-| request | Request | The incoming Web Request |
-| params | RouteParams | Dynamic URL params, e.g. `{ slug: "hello" }` |
-| context | TContext | App-level context from the adapter's context factory |
-| signal | AbortSignal | Cancellation signal for timeouts |
-| url | URL | Parsed URL object |
-| route | ResolvedRoute | Matched route metadata |
+| Field   | Type          | Description                                          |
+| ------- | ------------- | ---------------------------------------------------- |
+| request | Request       | The incoming Web Request                             |
+| params  | RouteParams   | Dynamic URL params, e.g. `{ slug: "hello" }`         |
+| context | TContext      | App-level context from the adapter's context factory |
+| signal  | AbortSignal   | Cancellation signal for timeouts                     |
+| url     | URL           | Parsed URL object                                    |
+| route   | ResolvedRoute | Matched route metadata                               |
 
 ### When loaders run
 
-| Scenario | Loader runs on |
-|----------|---------------|
-| SSG build | Build machine, once per path |
-| SSR request | Server, every request |
-| ISG initial | Build machine, then server on revalidation |
-| SPA | Server, during client navigation fetch |
-| Client navigation | Server (fetched as JSON) |
+| Scenario          | Loader runs on                             |
+| ----------------- | ------------------------------------------ |
+| SSG build         | Build machine, once per path               |
+| SSR request       | Server, every request                      |
+| ISG initial       | Build machine, then server on revalidation |
+| SPA               | Server, during client navigation fetch     |
+| Client navigation | Server (fetched as JSON)                   |
 
 > [!NOTE]
 > Loaders **never** run in the browser. Database connections, API keys, and secrets in loader code stay server-side permanently.
@@ -92,9 +92,7 @@ export function head({ data }: HeadArgs<typeof loader>) {
       { property: "og:title", content: data.post.title },
       { property: "og:image", content: data.post.coverUrl },
     ],
-    link: [
-      { rel: "canonical", href: `https://example.com/blog/${data.post.slug}` },
-    ],
+    link: [{ rel: "canonical", href: `https://example.com/blog/${data.post.slug}` }],
   };
 }
 ```

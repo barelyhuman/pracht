@@ -24,7 +24,9 @@ export function Component({ data }: RouteComponentProps<typeof loader>) {
   return (
     <section>
       <h1>{data.title}</h1>
-      <p>You are reading the post with slug: <code>{data.slug}</code></p>
+      <p>
+        You are reading the post with slug: <code>{data.slug}</code>
+      </p>
     </section>
   );
 }

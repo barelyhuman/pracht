@@ -238,15 +238,15 @@ directory and generates the route manifest automatically.
 
 ### File Conventions
 
-| File | Route |
-|------|-------|
-| `pages/index.tsx` | `/` |
-| `pages/about.tsx` | `/about` |
-| `pages/blog/index.tsx` | `/blog` |
-| `pages/blog/[slug].tsx` | `/blog/:slug` |
-| `pages/[...path].tsx` | `/*` |
-| `pages/_app.tsx` | *(shell, not a route)* |
-| `pages/_anything.tsx` | *(ignored)* |
+| File                    | Route                  |
+| ----------------------- | ---------------------- |
+| `pages/index.tsx`       | `/`                    |
+| `pages/about.tsx`       | `/about`               |
+| `pages/blog/index.tsx`  | `/blog`                |
+| `pages/blog/[slug].tsx` | `/blog/:slug`          |
+| `pages/[...path].tsx`   | `/*`                   |
+| `pages/_app.tsx`        | _(shell, not a route)_ |
+| `pages/_anything.tsx`   | _(ignored)_            |
 
 ### Shell via `_app.tsx`
 
@@ -284,7 +284,7 @@ Valid values: `"ssr"` | `"ssg"` | `"isg"` | `"spa"`. The default is `"ssr"`,
 overridable globally via `pagesDefaultRender`:
 
 ```typescript
-viact({ pagesDir: "/src/pages", pagesDefaultRender: "ssg" })
+viact({ pagesDir: "/src/pages", pagesDefaultRender: "ssg" });
 ```
 
 ### Route Priority

@@ -1,7 +1,14 @@
 import { h } from "preact";
 import { describe, expect, it } from "vitest";
 
-import { ViactHttpError, defineApp, handleViactRequest, resolveApiRoutes, route, useParams } from "../src/index.ts";
+import {
+  ViactHttpError,
+  defineApp,
+  handleViactRequest,
+  resolveApiRoutes,
+  route,
+  useParams,
+} from "../src/index.ts";
 
 describe("handleViactRequest rejects non-GET on page routes", () => {
   it("returns 405 for POST to a page route", async () => {

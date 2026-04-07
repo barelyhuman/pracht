@@ -6,7 +6,7 @@
   "assets": {
     "binding": "ASSETS",
     "directory": "dist/client",
-    "run_worker_first": true
+    "run_worker_first": true,
   },
-  "kv_namespaces": [{ "binding": "MY_KV", "id": "abc123" }]
+  "kv_namespaces": [{ "binding": "MY_KV", "id": "abc123" }],
 }
