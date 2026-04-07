@@ -1,7 +1,7 @@
 import { h } from "preact";
 import { describe, expect, it } from "vitest";
 
-import { ViactHttpError, defineApp, handleViactRequest, resolveApiRoutes, route } from "../src/index.ts";
+import { ViactHttpError, defineApp, handleViactRequest, resolveApiRoutes, route, useParams } from "../src/index.ts";
 
 describe("handleViactRequest actions", () => {
   it("translates redirect envelopes into HTTP redirects with headers", async () => {
@@ -163,6 +163,64 @@ describe("handleViactRequest with separate data modules", () => {
     expect(response.status).toBe(200);
     const html = await response.text();
     expect(html).toContain("Hello inline");
+  });
+});
+
+describe("useParams", () => {
+  it("provides route params to nested components during SSR", async () => {
+    const app = defineApp({
+      routes: [route("/products/:id", "./routes/product.tsx", { render: "ssr" })],
+    });
+
+    function NestedParamsDisplay() {
+      const params = useParams();
+      return h("span", { class: "params-id" }, params.id ?? "none");
+    }
+
+    const response = await handleViactRequest({
+      app,
+      registry: {
+        routeModules: {
+          "./routes/product.tsx": async () => ({
+            Component: () => h("main", null, h(NestedParamsDisplay, null)),
+            loader: async () => ({ name: "Widget" }),
+          }),
+        },
+      },
+      request: new Request("http://localhost/products/42"),
+    });
+
+    expect(response.status).toBe(200);
+    const html = await response.text();
+    expect(html).toContain("42");
+  });
+
+  it("provides empty params for static routes during SSR", async () => {
+    const app = defineApp({
+      routes: [route("/home", "./routes/home.tsx", { render: "ssr" })],
+    });
+
+    function NestedParamsDisplay() {
+      const params = useParams();
+      const keys = Object.keys(params);
+      return h("span", null, `keys:${keys.length}`);
+    }
+
+    const response = await handleViactRequest({
+      app,
+      registry: {
+        routeModules: {
+          "./routes/home.tsx": async () => ({
+            Component: () => h("main", null, h(NestedParamsDisplay, null)),
+          }),
+        },
+      },
+      request: new Request("http://localhost/home"),
+    });
+
+    expect(response.status).toBe(200);
+    const html = await response.text();
+    expect(html).toContain("keys:0");
   });
 });
 

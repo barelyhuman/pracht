@@ -251,6 +251,44 @@ test("same-shell navigation preserves shell and updates route content", async ({
 });
 
 // ---------------------------------------------------------------------------
+// Dynamic route with useParams
+// ---------------------------------------------------------------------------
+
+test("product page renders with useParams showing the route param", async ({ page }) => {
+  await page.goto("/products/1");
+
+  await expect(page.locator(".product-page")).toBeVisible();
+  await expect(page.locator(".product-id")).toContainText("Product ID: 1");
+  await expect(page.locator("h1")).toContainText("Widget");
+});
+
+test("product page SSR HTML contains params from useParams", async ({ request }) => {
+  const response = await request.get("/products/2");
+  const html = await response.text();
+
+  expect(html).toContain("Product ID: 2");
+  expect(html).toContain("Gadget");
+});
+
+test("client-side navigation to product page renders useParams correctly", async ({ page }) => {
+  await page.goto("/");
+  await page.waitForFunction(() => (window as any).__VIACT_ROUTER_READY__);
+
+  await page.evaluate(() => {
+    (window as any).__NAV_TOKEN__ = true;
+  });
+
+  await page.evaluate(() => (window as any).__VIACT_NAVIGATE__("/products/1"));
+  await page.waitForURL("/products/1");
+
+  await expect(page.locator(".product-id")).toContainText("Product ID: 1");
+  await expect(page.locator("h1")).toContainText("Widget");
+
+  const tokenSurvived = await page.evaluate(() => (window as any).__NAV_TOKEN__ === true);
+  expect(tokenSurvived).toBe(true);
+});
+
+// ---------------------------------------------------------------------------
 // API Routes
 // ---------------------------------------------------------------------------
 
