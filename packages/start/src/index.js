@@ -217,6 +217,7 @@ function buildProjectFiles({ adapter, packageManager, projectName }) {
 
   if (adapter.id === "cloudflare") {
     files["wrangler.jsonc"] = createWranglerConfig(projectName);
+    files["src/env.d.ts"] = createCloudflareEnvDeclaration();
   }
 
   return files;
@@ -386,6 +387,20 @@ function createWranglerConfig(projectName) {
     '    "binding": "ASSETS",',
     '    "directory": "dist/client",',
     '    "run_worker_first": true',
+    "  }",
+    "}",
+    "",
+  ].join("\n");
+}
+
+function createCloudflareEnvDeclaration() {
+  return [
+    'declare module "viact" {',
+    "  interface Register {",
+    "    context: {",
+    "      env: Env;",
+    "      executionContext: ExecutionContext;",
+    "    };",
     "  }",
     "}",
     "",

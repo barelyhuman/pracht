@@ -1,7 +1,6 @@
 import { existsSync, readFileSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { resolve } from "node:path";
-import { cloudflare } from "@cloudflare/vite-plugin";
 import preact from "@preact/preset-vite";
 import type { Connect, Plugin, ViteDevServer } from "vite";
 
@@ -237,13 +236,23 @@ export function viact(options: ViactPluginOptions = {}): Plugin[] {
   const plugins: Plugin[] = [...preact(), viactPlugin];
 
   if (resolved.adapter.id === "cloudflare") {
-    plugins.push(
-      ...cloudflare({
-        config: {
-          main: "virtual:viact/server",
-        },
-      }),
-    );
+    // Inject @cloudflare/vite-plugin lazily via a plugin that loads it in
+    // the async config hook, avoiding a top-level import that would pull
+    // wrangler types into every project.
+    plugins.push({
+      name: "viact:cloudflare",
+      async config(_, env) {
+        const { cloudflare } = await import("@cloudflare/vite-plugin");
+        const cfPlugins = cloudflare({
+          config: {
+            main: "virtual:viact/server",
+          },
+        });
+        return {
+          plugins: cfPlugins,
+        };
+      },
+    });
   }
 
   return plugins;
