@@ -33,6 +33,7 @@ export interface CloudflareAdapterOptions<
   apiRoutes?: ResolvedApiRoute[];
   clientEntryUrl?: string;
   cssManifest?: Record<string, string[]>;
+  jsManifest?: Record<string, string[]>;
   assetsBinding?: string;
   createContext?: (args: CloudflareContextArgs<TEnv>) => TContext | Promise<TContext>;
 }
@@ -72,6 +73,7 @@ export function createCloudflareFetchHandler<
       apiRoutes: options.apiRoutes,
       clientEntryUrl: options.clientEntryUrl,
       cssManifest: options.cssManifest,
+      jsManifest: options.jsManifest,
     } satisfies HandleViactRequestOptions<TContext>);
   };
 }
@@ -121,6 +123,7 @@ export function createCloudflareServerEntryModule(
     "    apiRoutes,",
     "    clientEntryUrl: clientEntryUrl ?? undefined,",
     "    cssManifest,",
+    "    jsManifest,",
     "  });",
     "}",
     "",

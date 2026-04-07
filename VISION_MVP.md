@@ -165,11 +165,10 @@ SSR and SSG, deployed to Node. Thoroughly tested with Playwright E2E tests.
 
 ## Phase 3 — Polish
 
-- `adapter-cloudflare`
-- Advanced prefetching strategies
-- Route-level code splitting optimizations
-- Error overlay in dev
-- Documentation website (self-hosted on viact)
+- ~~Error overlay in dev~~ ✓
+- ~~Route-level code splitting optimizations~~ ✓ (modulepreload hints, vendor chunks, jsManifest)
+- ~~Advanced prefetching strategies~~ ✓ (hover/viewport/intent with TTL cache)
+- ~~Documentation website (self-hosted on viact)~~ ✓ (expanded to 11 pages)
 
 ---
 

@@ -250,9 +250,9 @@ export async function DELETE({ params, context }: ApiRouteArgs) {
           <div class="doc-nav-dir">← Previous</div>
           <div class="doc-nav-title">Rendering Modes</div>
         </a>
-        <a href="/docs/adapters" class="doc-nav-card next">
+        <a href="/docs/api-routes" class="doc-nav-card next">
           <div class="doc-nav-dir">Next</div>
-          <div class="doc-nav-title">Adapters →</div>
+          <div class="doc-nav-title">API Routes →</div>
         </a>
       </div>
     </div>

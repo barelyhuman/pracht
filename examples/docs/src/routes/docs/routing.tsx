@@ -208,7 +208,10 @@ export const middleware: MiddlewareFn = async ({ request }) => {
 ])`} />
 
       <div class="doc-nav">
-        <div />
+        <a href="/docs/getting-started" class="doc-nav-card prev">
+          <div class="doc-nav-dir">Previous</div>
+          <div class="doc-nav-title">← Getting Started</div>
+        </a>
         <a href="/docs/rendering" class="doc-nav-card next">
           <div class="doc-nav-dir">Next</div>
           <div class="doc-nav-title">Rendering Modes →</div>

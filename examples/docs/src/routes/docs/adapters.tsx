@@ -191,11 +191,14 @@ createContext: ({ request, env, executionContext }) => ({
       </div>
 
       <div class="doc-nav">
-        <a href="/docs/data-loading" class="doc-nav-card">
+        <a href="/docs/deployment" class="doc-nav-card">
           <div class="doc-nav-dir">← Previous</div>
-          <div class="doc-nav-title">Data Loading</div>
+          <div class="doc-nav-title">Deployment</div>
         </a>
-        <div />
+        <a href="/docs/prefetching" class="doc-nav-card next">
+          <div class="doc-nav-dir">Next</div>
+          <div class="doc-nav-title">Prefetching →</div>
+        </a>
       </div>
     </div>
   );

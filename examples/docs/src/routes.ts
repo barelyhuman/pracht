@@ -9,6 +9,10 @@ export const app = defineApp({
     group({ shell: "home" }, [route("/", "./routes/home.tsx", { id: "home", render: "ssg" })]),
     group({ shell: "docs" }, [
       route("/docs", "./routes/docs/index.tsx", { id: "docs-index", render: "ssr" }),
+      route("/docs/getting-started", "./routes/docs/getting-started.tsx", {
+        id: "getting-started",
+        render: "ssg",
+      }),
       route("/docs/routing", "./routes/docs/routing.tsx", {
         id: "routing",
         render: "ssg",
@@ -21,8 +25,36 @@ export const app = defineApp({
         id: "data-loading",
         render: "ssg",
       }),
+      route("/docs/api-routes", "./routes/docs/api-routes.tsx", {
+        id: "api-routes",
+        render: "ssg",
+      }),
+      route("/docs/middleware", "./routes/docs/middleware.tsx", {
+        id: "middleware",
+        render: "ssg",
+      }),
+      route("/docs/shells", "./routes/docs/shells.tsx", {
+        id: "shells",
+        render: "ssg",
+      }),
+      route("/docs/cli", "./routes/docs/cli.tsx", {
+        id: "cli",
+        render: "ssg",
+      }),
+      route("/docs/deployment", "./routes/docs/deployment.tsx", {
+        id: "deployment",
+        render: "ssg",
+      }),
       route("/docs/adapters", "./routes/docs/adapters.tsx", {
         id: "adapters",
+        render: "ssg",
+      }),
+      route("/docs/prefetching", "./routes/docs/prefetching.tsx", {
+        id: "prefetching",
+        render: "ssg",
+      }),
+      route("/docs/performance", "./routes/docs/performance.tsx", {
+        id: "performance",
         render: "ssg",
       }),
     ]),

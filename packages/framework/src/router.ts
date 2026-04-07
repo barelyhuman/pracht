@@ -4,6 +4,7 @@ import { useContext } from "preact/hooks";
 import type { VNode } from "preact";
 
 import { matchAppRoute } from "./app.ts";
+import { getCachedRouteState, setupPrefetching } from "./prefetch.ts";
 import type { ResolvedViactApp, RouteMatch } from "./types.ts";
 import { fetchViactRouteState, ViactRuntimeProvider } from "./runtime.ts";
 import type { SerializedRouteError, ViactHydrationState } from "./runtime.ts";
@@ -96,13 +97,13 @@ export async function initClientRouter(options: InitClientRouterOptions): Promis
       return;
     }
 
-    // Fetch route state from server
+    // Check prefetch cache, then fetch route state from server
     let state: { data: unknown; error?: SerializedRouteError | null } = {
       data: undefined,
       error: null,
     };
     try {
-      const result = await fetchViactRouteState(to);
+      const result = await (getCachedRouteState(to) ?? fetchViactRouteState(to));
       if (result.type === "redirect") {
         if (result.location) {
           await navigate(result.location, opts);
@@ -244,6 +245,9 @@ export async function initClientRouter(options: InitClientRouterOptions): Promis
 
   window.__VIACT_NAVIGATE__ = navigate;
   window.__VIACT_ROUTER_READY__ = true;
+
+  // Start prefetching after hydration is complete
+  setupPrefetching(app);
 }
 
 function deserializeRouteError(error: SerializedRouteError): Error {

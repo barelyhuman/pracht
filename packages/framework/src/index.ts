@@ -48,6 +48,7 @@ export type {
   MiddlewareModule,
   MiddlewareResult,
   ModuleImporter,
+  PrefetchStrategy,
   ModuleRegistry,
   RenderMode,
   ResolvedApiRoute,

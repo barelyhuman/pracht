@@ -46,6 +46,8 @@ export interface HandleViactRequestOptions<TContext = unknown> {
   cssManifest?: Record<string, string[]>;
   /** @deprecated Pass cssManifest instead for per-page CSS resolution. */
   cssUrls?: string[];
+  /** Per-source-file JS chunk map produced by the vite plugin for modulepreload hints. */
+  jsManifest?: Record<string, string[]>;
   apiRoutes?: ResolvedApiRoute[];
 }
 
@@ -458,6 +460,7 @@ export async function handleViactRequest<TContext>(
     const head = await mergeHeadMetadata(shellModule, routeModule, routeArgs, data);
 
     const cssUrls = resolvePageCssUrls(options, match.route.shellFile, match.route.file);
+    const modulePreloadUrls = resolvePageJsUrls(options, match.route.shellFile, match.route.file);
 
     // --- SPA mode: shell HTML with empty body, no SSR ---
     if (match.route.render === "spa") {
@@ -473,6 +476,7 @@ export async function handleViactRequest<TContext>(
           },
           clientEntryUrl: options.clientEntryUrl,
           cssUrls,
+          modulePreloadUrls,
         }),
       );
     }
@@ -520,6 +524,7 @@ export async function handleViactRequest<TContext>(
         },
         clientEntryUrl: options.clientEntryUrl,
         cssUrls,
+        modulePreloadUrls,
       }),
     );
   } catch (error: unknown) {
@@ -563,6 +568,30 @@ function resolvePageCssUrls(
   if (shellFile) addFromManifest(shellFile);
   addFromManifest(routeFile);
   return [...css];
+}
+
+function resolvePageJsUrls(
+  options: HandleViactRequestOptions<unknown>,
+  shellFile: string | undefined,
+  routeFile: string,
+): string[] {
+  if (!options.jsManifest) return [];
+
+  const js = new Set<string>();
+
+  function addFromManifest(file: string): void {
+    const suffix = file.replace(/^\.\//, "");
+    for (const [key, jsFiles] of Object.entries(options.jsManifest!)) {
+      if (key === file || key.endsWith(`/${suffix}`) || key.endsWith(suffix)) {
+        for (const j of jsFiles) js.add(j);
+        break;
+      }
+    }
+  }
+
+  if (shellFile) addFromManifest(shellFile);
+  addFromManifest(routeFile);
+  return [...js];
 }
 
 async function useRevalidateResult(
@@ -716,6 +745,7 @@ async function renderRouteErrorResponse<TContext>(options: {
       : undefined);
   const head = shellModule?.head ? await shellModule.head(options.routeArgs) : {};
   const cssUrls = resolvePageCssUrls(options.options, options.shellFile, options.routeArgs.route.file);
+  const modulePreloadUrls = resolvePageJsUrls(options.options, options.shellFile, options.routeArgs.route.file);
   const { renderToStringAsync } = await import("preact-render-to-string");
 
   const ErrorBoundary = options.routeModule.ErrorBoundary as any;
@@ -747,6 +777,7 @@ async function renderRouteErrorResponse<TContext>(options: {
       },
       clientEntryUrl: options.options.clientEntryUrl,
       cssUrls,
+      modulePreloadUrls,
     }),
     routeError.status,
   );
@@ -875,8 +906,9 @@ function buildHtmlDocument(options: {
   hydrationState: ViactHydrationState;
   clientEntryUrl?: string;
   cssUrls?: string[];
+  modulePreloadUrls?: string[];
 }): string {
-  const { head, body, hydrationState, clientEntryUrl, cssUrls = [] } = options;
+  const { head, body, hydrationState, clientEntryUrl, cssUrls = [], modulePreloadUrls = [] } = options;
 
   const titleTag = head.title ? `<title>${escapeHtml(head.title)}</title>` : "";
 
@@ -902,6 +934,10 @@ function buildHtmlDocument(options: {
     .map((url) => `<link rel="stylesheet" href="${escapeHtml(url)}">`)
     .join("\n    ");
 
+  const modulePreloadTags = modulePreloadUrls
+    .map((url) => `<link rel="modulepreload" href="${escapeHtml(url)}">`)
+    .join("\n    ");
+
   const stateScript = `<script id="${HYDRATION_STATE_ELEMENT_ID}" type="application/json">${serializeJsonForHtml(hydrationState)}</script>`;
   const entryScript = clientEntryUrl
     ? `<script type="module" src="${escapeHtml(clientEntryUrl)}"></script>`
@@ -915,6 +951,7 @@ function buildHtmlDocument(options: {
     ${metaTags}
     ${linkTags}
     ${cssTags}
+    ${modulePreloadTags}
   </head>
   <body>
     <div id="viact-root">${body}</div>

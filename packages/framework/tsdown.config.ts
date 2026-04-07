@@ -1,7 +1,7 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  entry: ["src/index.ts", "src/error-overlay.ts"],
   format: "esm",
   dts: true,
   external: ["preact", "preact/hooks", "preact-render-to-string"],

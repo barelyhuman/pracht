@@ -69,7 +69,23 @@ export function viact(options: ViactPluginOptions = {}): Plugin[] {
     enforce: "pre",
 
     config() {
-      return { appType: "custom" as const };
+      return {
+        appType: "custom" as const,
+        build: {
+          rollupOptions: {
+            output: {
+              manualChunks(id: string) {
+                if (
+                  id.includes("node_modules/preact") ||
+                  id.includes("node_modules/preact-suspense")
+                ) {
+                  return "vendor";
+                }
+              },
+            },
+          },
+        },
+      };
     },
 
     configResolved(config) {
@@ -193,6 +209,7 @@ export function createViactServerModuleSource(
     `export const buildTarget = ${JSON.stringify(resolved.adapter)};`,
     `export const clientEntryUrl = ${JSON.stringify(clientBuild.clientEntryUrl)};`,
     `export const cssManifest = ${JSON.stringify(clientBuild.cssManifest)};`,
+    `export const jsManifest = ${JSON.stringify(clientBuild.jsManifest)};`,
     "",
   ];
 
@@ -303,7 +320,37 @@ function createDevSSRMiddleware(
       if (error instanceof Error) {
         server.ssrFixStacktrace(error);
       }
-      next(error);
+
+      // For route-state JSON requests, return a JSON error
+      const isRouteState = req.headers["x-viact-route-state-request"] === "1";
+      if (isRouteState) {
+        res.statusCode = 500;
+        res.setHeader("content-type", "application/json; charset=utf-8");
+        res.end(JSON.stringify({
+          error: {
+            message: error instanceof Error ? error.message : String(error),
+            name: error instanceof Error ? error.name : "Error",
+            status: 500,
+          },
+        }));
+        return;
+      }
+
+      // Render the viact error overlay for HTML requests
+      try {
+        const { buildErrorOverlayHtml } = await server.ssrLoadModule("viact/error-overlay");
+        let html = buildErrorOverlayHtml({
+          message: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+        html = await server.transformIndexHtml(url, html);
+        res.statusCode = 500;
+        res.setHeader("content-type", "text/html; charset=utf-8");
+        res.end(html);
+      } catch {
+        // If overlay itself fails, fall through to Vite's default handler
+        next(error);
+      }
     }
   };
 }
@@ -363,21 +410,22 @@ function resolveOptions(options: ViactPluginOptions): ResolvedViactPluginOptions
 function readClientBuildAssets(root = process.cwd()): {
   clientEntryUrl: string | null;
   cssManifest: Record<string, string[]>;
+  jsManifest: Record<string, string[]>;
 } {
   const manifestPath = resolve(root, "dist/client/.vite/manifest.json");
   if (!existsSync(manifestPath)) {
-    return { clientEntryUrl: null, cssManifest: {} };
+    return { clientEntryUrl: null, cssManifest: {}, jsManifest: {} };
   }
 
   const rawManifest = readFileSync(manifestPath, "utf-8");
   const manifest = JSON.parse(rawManifest) as Record<string, ViteManifestEntry>;
   const clientEntry = manifest[VIACT_CLIENT_MODULE_ID];
 
-  // For each source file, compute its transitive CSS by walking static imports only
-  // (not dynamicImports — those belong to other shells/routes loaded separately).
-  // This gives per-page CSS: look up the matched shell + route at request time.
-  function collectTransitiveCss(key: string): string[] {
+  // Walk static imports transitively (not dynamicImports — those belong to
+  // other shells/routes loaded separately). Returns both CSS and JS deps.
+  function collectTransitiveDeps(key: string): { css: string[]; js: string[] } {
     const css = new Set<string>();
+    const js = new Set<string>();
     const visited = new Set<string>();
 
     function collect(k: string): void {
@@ -386,25 +434,31 @@ function readClientBuildAssets(root = process.cwd()): {
       const entry = manifest[k];
       if (!entry) return;
       for (const c of entry.css ?? []) css.add(c);
+      js.add(entry.file);
       for (const imp of entry.imports ?? []) collect(imp);
     }
 
     collect(key);
-    return [...css];
+    return { css: [...css], js: [...js] };
   }
 
   const cssManifest: Record<string, string[]> = {};
+  const jsManifest: Record<string, string[]> = {};
   for (const [key, entry] of Object.entries(manifest)) {
     if (!entry.src) continue;
-    const css = collectTransitiveCss(key);
-    if (css.length > 0) {
-      cssManifest[key] = css.map((f) => `/${f}`);
+    const deps = collectTransitiveDeps(key);
+    if (deps.css.length > 0) {
+      cssManifest[key] = deps.css.map((f) => `/${f}`);
+    }
+    if (deps.js.length > 0) {
+      jsManifest[key] = deps.js.map((f) => `/${f}`);
     }
   }
 
   return {
     clientEntryUrl: clientEntry ? `/${clientEntry.file}` : null,
     cssManifest,
+    jsManifest,
   };
 }
 

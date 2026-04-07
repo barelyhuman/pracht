@@ -29,6 +29,7 @@ export interface NodeAdapterOptions<TContext = unknown> {
   clientEntryUrl?: string;
   cssUrls?: string[];
   cssManifest?: Record<string, string[]>;
+  jsManifest?: Record<string, string[]>;
   createContext?: (args: NodeAdapterContextArgs) => TContext | Promise<TContext>;
 }
 
@@ -106,6 +107,7 @@ export function createNodeRequestHandler<TContext = unknown>(
       apiRoutes: options.apiRoutes,
       clientEntryUrl: options.clientEntryUrl,
       cssManifest: options.cssManifest,
+      jsManifest: options.jsManifest,
     } satisfies HandleViactRequestOptions<TContext>);
 
     // Cache ISG responses on first render
@@ -142,6 +144,7 @@ async function regenerateISGPage<TContext>(
     request,
     clientEntryUrl: options.clientEntryUrl,
     cssManifest: options.cssManifest,
+    jsManifest: options.jsManifest,
   });
 
   if (response.status === 200) {
@@ -176,6 +179,7 @@ export function createNodeServerEntryModule(options: NodeServerEntryModuleOption
     "  apiRoutes,",
     "  clientEntryUrl: clientEntryUrl ?? undefined,",
     "  cssManifest,",
+    "  jsManifest,",
     "});",
     "",
     "const entryHref = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;",

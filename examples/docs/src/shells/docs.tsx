@@ -6,9 +6,37 @@ const NAV = [
   {
     label: "Getting Started",
     links: [
+      { href: "/docs/getting-started", icon: "🚀", title: "Quick Start" },
       { href: "/docs/routing", icon: "🗺", title: "Routing" },
+    ],
+  },
+  {
+    label: "Core Concepts",
+    links: [
       { href: "/docs/rendering", icon: "⚡", title: "Rendering Modes" },
       { href: "/docs/data-loading", icon: "📡", title: "Data Loading" },
+      { href: "/docs/api-routes", icon: "🔌", title: "API Routes" },
+      { href: "/docs/middleware", icon: "🛡", title: "Middleware" },
+      { href: "/docs/shells", icon: "📐", title: "Shells" },
+    ],
+  },
+  {
+    label: "Guides",
+    links: [
+      { href: "/docs/cli", icon: "⌨", title: "CLI" },
+      { href: "/docs/deployment", icon: "🚢", title: "Deployment" },
+    ],
+  },
+  {
+    label: "Advanced",
+    links: [
+      { href: "/docs/prefetching", icon: "🔮", title: "Prefetching" },
+      { href: "/docs/performance", icon: "⚡", title: "Performance" },
+    ],
+  },
+  {
+    label: "Reference",
+    links: [
       { href: "/docs/adapters", icon: "🌐", title: "Adapters" },
     ],
   },
@@ -47,7 +75,7 @@ export function Shell({ children }: ShellProps) {
             viact
           </a>
           <nav class="header-nav">
-            <a href="/docs/routing" class={docsActive ? "active" : ""}>
+            <a href="/docs/getting-started" class={docsActive ? "active" : ""}>
               Docs
             </a>
           </nav>

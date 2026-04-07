@@ -39,12 +39,15 @@ export interface ApiRouteMatch {
   pathname: string;
 }
 
+export type PrefetchStrategy = "none" | "hover" | "viewport" | "intent";
+
 export interface RouteMeta {
   id?: string;
   shell?: string;
   render?: RenderMode;
   middleware?: string[];
   revalidate?: RouteRevalidate;
+  prefetch?: PrefetchStrategy;
 }
 
 export interface GroupMeta {
