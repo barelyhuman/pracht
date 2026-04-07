@@ -4,10 +4,6 @@ import { resolve } from "node:path";
 import preact from "@preact/preset-vite";
 import type { Connect, Plugin, ViteDevServer } from "vite";
 
-import { createCloudflareServerEntryModule } from "@viact/adapter-cloudflare";
-import { createNodeServerEntryModule } from "@viact/adapter-node";
-import { createVercelServerEntryModule } from "@viact/adapter-vercel";
-
 export const VIACT_CLIENT_MODULE_ID = "virtual:viact/client";
 export const VIACT_SERVER_MODULE_ID = "virtual:viact/server";
 
@@ -30,6 +26,72 @@ function isServerModule(id: string): boolean {
   return id === VIACT_SERVER_MODULE_ID || id.endsWith(VIACT_SERVER_MODULE_ID);
 }
 
+/**
+ * An adapter object that bridges viact's platform-agnostic core to a specific
+ * deployment target.  Built-in adapters are provided by `@viact/adapter-node`,
+ * `@viact/adapter-cloudflare`, and `@viact/adapter-vercel`.  You can also
+ * supply a custom adapter that conforms to this interface.
+ */
+export interface ViactAdapter {
+  /** A short identifier used at build time (e.g. "node", "cloudflare", "vercel"). */
+  id: string;
+  /**
+   * Extra import statements that must appear at the top of the generated
+   * `virtual:viact/server` module.  Return an empty string if none are needed.
+   */
+  serverImports: string;
+  /**
+   * Returns the JavaScript source code appended to the generated
+   * `virtual:viact/server` module.  This is where the adapter wires up its
+   * request handler or default export.
+   */
+  createServerEntryModule(): string;
+}
+
+function createDefaultNodeAdapter(): ViactAdapter {
+  return {
+    id: "node",
+    serverImports: 'import { resolveApp, resolveApiRoutes } from "viact";',
+    createServerEntryModule() {
+      return [
+        'import { existsSync, readFileSync } from "node:fs";',
+        'import { createServer } from "node:http";',
+        'import { dirname, resolve } from "node:path";',
+        'import { fileURLToPath, pathToFileURL } from "node:url";',
+        'import { createNodeRequestHandler } from "@viact/adapter-node";',
+        "",
+        'const serverDir = dirname(fileURLToPath(import.meta.url));',
+        'const staticDir = resolve(serverDir, "../client");',
+        'const isgManifestPath = resolve(serverDir, "isg-manifest.json");',
+        'const isgManifest = existsSync(isgManifestPath)',
+        '  ? JSON.parse(readFileSync(isgManifestPath, "utf-8"))',
+        '  : {};',
+        "",
+        "export const handler = createNodeRequestHandler({",
+        "  app: resolvedApp,",
+        "  registry,",
+        "  staticDir,",
+        "  isgManifest,",
+        "  apiRoutes,",
+        "  clientEntryUrl: clientEntryUrl ?? undefined,",
+        "  cssManifest,",
+        "  jsManifest,",
+        "});",
+        "",
+        "const entryHref = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;",
+        'if (entryHref && import.meta.url === entryHref) {',
+        '  const server = createServer(handler);',
+        '  const port = Number(process.env.PORT ?? 3000);',
+        '  server.listen(port, () => {',
+        '    console.log(`viact node server listening on http://localhost:${port}`);',
+        '  });',
+        "}",
+        "",
+      ].join("\n");
+    },
+  };
+}
+
 export interface ViactPluginOptions {
   appFile?: string;
   routesDir?: string;
@@ -38,16 +100,9 @@ export interface ViactPluginOptions {
   apiDir?: string;
   serverDir?: string;
   adapter?: ViactAdapter;
-  cloudflareAssetsBinding?: string;
-  vercelFunctionName?: string;
-  vercelRegions?: string | string[];
 }
 
-export type ViactAdapter = "node" | "cloudflare" | "vercel";
-
-type ResolvedViactPluginOptions = Omit<Required<ViactPluginOptions>, "vercelRegions"> & {
-  vercelRegions: string | string[] | undefined;
-};
+type ResolvedViactPluginOptions = Required<ViactPluginOptions>;
 
 const DEFAULTS: ResolvedViactPluginOptions = {
   appFile: "/src/routes.ts",
@@ -56,10 +111,7 @@ const DEFAULTS: ResolvedViactPluginOptions = {
   shellsDir: "/src/shells",
   apiDir: "/src/api",
   serverDir: "/src/server",
-  adapter: "node",
-  cloudflareAssetsBinding: "ASSETS",
-  vercelFunctionName: "render",
-  vercelRegions: undefined as string | string[] | undefined,
+  adapter: createDefaultNodeAdapter(),
 };
 
 export function viact(options: ViactPluginOptions = {}): Plugin[] {
@@ -196,45 +248,30 @@ export function createViactServerModuleSource(
   const resolved = resolveOptions(options);
   const registrySource = createViactRegistryModuleSource(resolved);
   const clientBuild = readClientBuildAssets(buildOptions.root);
-  const viactImport =
-    resolved.adapter === "cloudflare" || resolved.adapter === "vercel"
-      ? 'import { handleViactRequest, resolveApp, resolveApiRoutes } from "viact";'
-      : 'import { resolveApp, resolveApiRoutes } from "viact";';
+  const adapter = resolved.adapter;
+
+  // The adapter tells us what extra imports it needs (e.g. handleViactRequest)
+  const viactImports = adapter?.serverImports
+    ? adapter.serverImports
+    : 'import { resolveApp, resolveApiRoutes } from "viact";';
 
   const source = [
-    viactImport,
+    viactImports,
     `import { app } from ${JSON.stringify(resolved.appFile)};`,
     "",
     registrySource,
     "",
     "export const resolvedApp = resolveApp(app);",
     `export const apiRoutes = resolveApiRoutes(Object.keys(apiModules), ${JSON.stringify(resolved.apiDir)});`,
-    `export const buildTarget = ${JSON.stringify(resolved.adapter)};`,
+    `export const buildTarget = ${JSON.stringify(adapter?.id ?? "node")};`,
     `export const clientEntryUrl = ${JSON.stringify(clientBuild.clientEntryUrl)};`,
     `export const cssManifest = ${JSON.stringify(clientBuild.cssManifest)};`,
     `export const jsManifest = ${JSON.stringify(clientBuild.jsManifest)};`,
     "",
   ];
 
-  if (resolved.adapter === "cloudflare") {
-    source.push(
-      createCloudflareServerEntryModule({
-        assetsBinding: resolved.cloudflareAssetsBinding,
-      }),
-    );
-  }
-
-  if (resolved.adapter === "node") {
-    source.push(createNodeServerEntryModule());
-  }
-
-  if (resolved.adapter === "vercel") {
-    source.push(
-      createVercelServerEntryModule({
-        functionName: resolved.vercelFunctionName,
-        regions: resolved.vercelRegions,
-      }),
-    );
+  if (adapter) {
+    source.push(adapter.createServerEntryModule());
   }
 
   return source.join("\n");

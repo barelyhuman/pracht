@@ -111,7 +111,7 @@ function parseFrontmatter(raw: string): { frontmatter: Frontmatter; body: string
   const fm: Record<string, unknown> = {};
 
   let currentKey = "";
-  let indent = 0;
+  let _indent = 0;
   let nested: Record<string, string> | null = null;
 
   for (const line of yaml.split("\n")) {
@@ -135,7 +135,7 @@ function parseFrontmatter(raw: string): { frontmatter: Frontmatter; body: string
       if (value === "") {
         // Start of nested object
         nested = {};
-        indent = 0;
+        _indent = 0;
       } else {
         nested = null;
         fm[currentKey] = value;

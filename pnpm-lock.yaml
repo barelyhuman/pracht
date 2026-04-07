@@ -17,9 +17,6 @@ importers:
       '@playwright/test':
         specifier: ^1.52.0
         version: 1.59.1
-      '@preact/preset-vite':
-        specifier: ^2.9.4
-        version: 2.10.5(@babel/core@7.29.0)(preact@10.29.1)(rollup@4.60.1)(vite@8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@22.19.17)(esbuild@0.27.3))
       '@types/node':
         specifier: ^22.15.21
         version: 22.19.17
@@ -53,13 +50,13 @@ importers:
       '@viact/adapter-node':
         specifier: workspace:*
         version: link:../../packages/adapter-node
+      '@viact/adapter-vercel':
+        specifier: workspace:*
+        version: link:../../packages/adapter-vercel
       viact:
         specifier: workspace:*
         version: link:../../packages/framework
     devDependencies:
-      '@preact/preset-vite':
-        specifier: ^2.9.4
-        version: 2.10.5(@babel/core@7.29.0)(preact@10.29.1)(rollup@4.60.1)(vite@8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@22.19.17)(esbuild@0.27.3))
       '@viact/cli':
         specifier: workspace:*
         version: link:../../packages/cli
@@ -85,9 +82,6 @@ importers:
         specifier: workspace:*
         version: link:../../packages/framework
     devDependencies:
-      '@preact/preset-vite':
-        specifier: ^2.9.4
-        version: 2.10.5(@babel/core@7.29.0)(preact@10.29.1)(rollup@4.60.1)(vite@8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@22.19.17)(esbuild@0.27.3))
       '@viact/cli':
         specifier: workspace:*
         version: link:../../packages/cli
@@ -116,9 +110,6 @@ importers:
         specifier: ^4.80.0
         version: 4.80.0
     devDependencies:
-      '@preact/preset-vite':
-        specifier: ^2.9.4
-        version: 2.10.5(@babel/core@7.29.0)(preact@10.29.1)(rollup@4.60.1)(vite@8.0.3(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@types/node@22.19.17)(esbuild@0.27.3))
       '@viact/cli':
         specifier: workspace:*
         version: link:../../packages/cli
