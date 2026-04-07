@@ -44,6 +44,10 @@ const NAV = [
     ],
   },
   {
+    label: "Migration",
+    links: [{ href: "/docs/migrate/nextjs", icon: "🔄", title: "From Next.js" }],
+  },
+  {
     label: "Reference",
     links: [{ href: "/docs/adapters", icon: "🌐", title: "Adapters" }],
   },
