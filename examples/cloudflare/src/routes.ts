@@ -16,6 +16,10 @@ export const app = defineApp({
         render: "isg",
         revalidate: timeRevalidate(3600),
       }),
+      route("/products/:id", "./routes/products/[id].tsx", {
+        id: "product",
+        render: "ssr",
+      }),
     ]),
     group({ shell: "app", middleware: ["auth"] }, [
       route("/dashboard", "./routes/dashboard.tsx", {
