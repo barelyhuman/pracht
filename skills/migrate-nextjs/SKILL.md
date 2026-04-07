@@ -66,7 +66,7 @@ For pages router projects, you can **skip manual manifest wiring entirely** (Pha
 | `app/layout.tsx`                | `src/shells/*.tsx` + `shells` in `defineApp`        | Shells are named, not directory-nested                                |
 | `app/loading.tsx`               | No direct equivalent                                | Use Suspense in component if needed                                   |
 | `app/error.tsx`                 | `ErrorBoundary` export in route module              | Same concept, different wiring                                        |
-| `app/not-found.tsx`             | 404 route: `route("*", "./routes/not-found.tsx")`   | Catch-all at end of routes array                                      |
+| `app/not-found.tsx`             | 404 route: `route("*", () => import("./routes/not-found.tsx"))`   | Catch-all at end of routes array                                      |
 | `middleware.ts`                 | `src/middleware/*.ts` + `middleware` in `defineApp` | Named, applied per route/group                                        |
 | `app/api/*/route.ts`            | `src/api/*.ts` with `GET`/`POST` exports            | Auto-discovered, no manifest entry                                    |
 | `generateStaticParams`          | `getStaticPaths()` export                           | Returns `RouteParams[]` of param objects                              |
@@ -299,7 +299,7 @@ export const middleware: MiddlewareFn = async ({ request }) => {
 Then apply it in the manifest:
 
 ```ts
-group({ middleware: ["auth"] }, [route("/dashboard", "./routes/dashboard.tsx", { render: "ssr" })]);
+group({ middleware: ["auth"] }, [route("/dashboard", () => import("./routes/dashboard.tsx"), { render: "ssr" })]);
 ```
 
 Key transforms:
@@ -319,21 +319,21 @@ import { defineApp, group, route } from "@pracht/core";
 
 export const app = defineApp({
   shells: {
-    main: "./shells/main.tsx",
+    main: () => import("./shells/main.tsx"),
   },
   middleware: {
-    auth: "./middleware/auth.ts",
+    auth: () => import("./middleware/auth.ts"),
   },
   routes: [
     group({ shell: "main" }, [
-      route("/", "./routes/home.tsx", { render: "ssg" }),
-      route("/about", "./routes/about.tsx", { render: "ssg" }),
-      route("/dashboard", "./routes/dashboard.tsx", {
+      route("/", () => import("./routes/home.tsx"), { render: "ssg" }),
+      route("/about", () => import("./routes/about.tsx"), { render: "ssg" }),
+      route("/dashboard", () => import("./routes/dashboard.tsx"), {
         render: "ssr",
         middleware: ["auth"],
       }),
-      route("/blog/:slug", "./routes/blog-post.tsx", { render: "isg" }),
-      route("*", "./routes/not-found.tsx", { render: "ssr" }),
+      route("/blog/:slug", () => import("./routes/blog-post.tsx"), { render: "isg" }),
+      route("*", () => import("./routes/not-found.tsx"), { render: "ssr" }),
     ]),
   ],
 });
