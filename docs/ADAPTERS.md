@@ -132,6 +132,60 @@ executionContext }` to viact so loaders, actions, and middleware can access
   R2, cron, and any other Cloudflare bindings without losing them on rebuild.
 - **KV/D1/R2 support**: custom context factories and the default build entry both
   surface the Cloudflare `env` object.
+- **`@cloudflare/vite-plugin` integration**: pass the Cloudflare Vite plugin via
+  `vitePlugin` to run the dev server inside workerd, giving API routes and
+  loaders full access to Cloudflare bindings (KV, D1, R2, Queues, etc.) during
+  development.
+
+### Using Cloudflare bindings in dev
+
+Install `@cloudflare/vite-plugin` and pass it to the adapter:
+
+```typescript
+// vite.config.ts
+import { cloudflare } from "@cloudflare/vite-plugin";
+import { cloudflareAdapter } from "@viact/adapter-cloudflare";
+import { viact } from "@viact/vite-plugin";
+
+export default defineConfig({
+  plugins: [
+    viact({
+      adapter: cloudflareAdapter({
+        vitePlugin: cloudflare(),
+      }),
+    }),
+  ],
+});
+```
+
+Create a thin worker entry that re-exports the viact virtual module:
+
+```typescript
+// src/worker.ts
+export { default } from "virtual:viact/server";
+```
+
+Point `wrangler.jsonc` at this source entry and declare your bindings:
+
+```jsonc
+{
+  "main": "src/worker.ts",
+  "kv_namespaces": [{ "binding": "MY_KV", "id": "..." }],
+  "d1_databases": [{ "binding": "DB", "database_name": "my-db", "database_id": "..." }]
+}
+```
+
+Bindings are available via `context.env` in loaders, actions, and API routes:
+
+```typescript
+// src/api/items.ts
+import type { BaseRouteArgs } from "viact";
+
+export async function GET({ context }: BaseRouteArgs) {
+  const value = await context.env.MY_KV.get("key");
+  return Response.json({ value });
+}
+```
 
 ### Entry module
 
@@ -240,6 +294,10 @@ export default async function handle(request) {
 }
 `;
     },
+    // Optional: extra Vite plugins the adapter needs (e.g. runtime-specific dev tooling)
+    plugins: [],
+    // Optional: set true if the adapter handles dev SSR itself (e.g. via workerd)
+    handlesDev: false,
   };
 }
 ```

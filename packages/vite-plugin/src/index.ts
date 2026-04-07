@@ -48,6 +48,17 @@ export interface ViactAdapter {
    * request handler or default export.
    */
   createServerEntryModule(): string;
+  /**
+   * Additional Vite plugins provided by the adapter.  These are included in the
+   * array returned by `viact()`.  For example, the Cloudflare adapter can
+   * include `@cloudflare/vite-plugin` here so bindings are available in dev.
+   */
+  plugins?: Plugin[];
+  /**
+   * When `true`, the adapter handles dev SSR itself (e.g. via workerd) and
+   * viact will not install its own Node-based dev SSR middleware.
+   */
+  handlesDev?: boolean;
 }
 
 function createDefaultNodeAdapter(): ViactAdapter {
@@ -191,6 +202,7 @@ export function viact(options: ViactPluginOptions = {}): Plugin[] {
         });
       }
 
+      if (resolved.adapter.handlesDev) return;
       return () => {
         server.middlewares.use(createDevSSRMiddleware(server, resolved));
       };
@@ -232,7 +244,8 @@ export function viact(options: ViactPluginOptions = {}): Plugin[] {
     },
   };
 
-  return [...preact(), viactPlugin];
+  const adapterPlugins = resolved.adapter.plugins ?? [];
+  return [...preact(), viactPlugin, ...adapterPlugins];
 }
 
 // ---------------------------------------------------------------------------

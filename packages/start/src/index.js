@@ -216,6 +216,7 @@ function buildProjectFiles({ adapter, packageManager, projectName }) {
   };
 
   if (adapter.id === "cloudflare") {
+    files["src/worker.ts"] = 'export { default } from "virtual:viact/server";\n';
     files["wrangler.jsonc"] = createWranglerConfig(projectName);
   }
 
@@ -239,6 +240,7 @@ function createPackageJson({ adapter, projectName }) {
 
   if (adapter.id === "cloudflare") {
     scripts.deploy = "viact build && wrangler deploy";
+    devDependencies["@cloudflare/vite-plugin"] = "^1.0.0";
     devDependencies.wrangler = "^4.12.0";
   }
 
@@ -261,9 +263,28 @@ function createPackageJson({ adapter, projectName }) {
 }
 
 function createViteConfig(adapter) {
+  if (adapter.id === "cloudflare") {
+    return [
+      'import { defineConfig } from "vite";',
+      'import { cloudflare } from "@cloudflare/vite-plugin";',
+      'import { viact } from "@viact/vite-plugin";',
+      'import { cloudflareAdapter } from "@viact/adapter-cloudflare";',
+      "",
+      "export default defineConfig({",
+      "  plugins: [",
+      "    viact({",
+      "      adapter: cloudflareAdapter({",
+      "        vitePlugin: cloudflare(),",
+      "      }),",
+      "    }),",
+      "  ],",
+      "});",
+      "",
+    ].join("\n");
+  }
+
   const ADAPTER_IMPORTS = {
     node: { fn: "nodeAdapter", pkg: "@viact/adapter-node" },
-    cloudflare: { fn: "cloudflareAdapter", pkg: "@viact/adapter-cloudflare" },
   };
 
   const info = ADAPTER_IMPORTS[adapter.id] ?? ADAPTER_IMPORTS.node;
@@ -380,7 +401,7 @@ function createWranglerConfig(projectName) {
     "{",
     '  "$schema": "node_modules/wrangler/config-schema.json",',
     `  "name": ${JSON.stringify(projectName)},`,
-    '  "main": "dist/server/server.js",',
+    '  "main": "src/worker.ts",',
     `  "compatibility_date": ${JSON.stringify(compatibilityDate)},`,
     '  "assets": {',
     '    "binding": "ASSETS",',

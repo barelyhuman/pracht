@@ -16,5 +16,8 @@
   },
   "dependencies": {
     "viact": "workspace:*"
+  },
+  "peerDependencies": {
+    "vite": "^8.0.0"
   }
 }
