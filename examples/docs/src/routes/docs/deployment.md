@@ -18,7 +18,7 @@ The default adapter. Generates a standalone Node.js server with static file serv
 import { viact } from "@viact/vite-plugin";
 
 export default defineConfig({
-  plugins: [preact(), viact()],
+  plugins: [viact()],
   // adapter defaults to "node"
 });
 ```
@@ -39,7 +39,7 @@ Deploys as a Cloudflare Worker with static assets served via the `ASSETS` bindin
 import { cloudflareAdapter } from "@viact/adapter-cloudflare";
 
 export default defineConfig({
-  plugins: [preact(), viact({ adapter: cloudflareAdapter() })],
+  plugins: [viact({ adapter: cloudflareAdapter() })],
 });
 ```
 
@@ -61,7 +61,7 @@ Deploys as a Vercel Edge Function with static assets served from the CDN.
 import { vercelAdapter } from "@viact/adapter-vercel";
 
 export default defineConfig({
-  plugins: [preact(), viact({ adapter: vercelAdapter() })],
+  plugins: [viact({ adapter: vercelAdapter() })],
 });
 ```
 
