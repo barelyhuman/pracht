@@ -48,6 +48,50 @@ export interface ViactAdapter {
   createServerEntryModule(): string;
 }
 
+function createDefaultNodeAdapter(): ViactAdapter {
+  return {
+    id: "node",
+    serverImports: 'import { resolveApp, resolveApiRoutes } from "viact";',
+    createServerEntryModule() {
+      return [
+        'import { existsSync, readFileSync } from "node:fs";',
+        'import { createServer } from "node:http";',
+        'import { dirname, resolve } from "node:path";',
+        'import { fileURLToPath, pathToFileURL } from "node:url";',
+        'import { createNodeRequestHandler } from "@viact/adapter-node";',
+        "",
+        'const serverDir = dirname(fileURLToPath(import.meta.url));',
+        'const staticDir = resolve(serverDir, "../client");',
+        'const isgManifestPath = resolve(serverDir, "isg-manifest.json");',
+        'const isgManifest = existsSync(isgManifestPath)',
+        '  ? JSON.parse(readFileSync(isgManifestPath, "utf-8"))',
+        '  : {};',
+        "",
+        "export const handler = createNodeRequestHandler({",
+        "  app: resolvedApp,",
+        "  registry,",
+        "  staticDir,",
+        "  isgManifest,",
+        "  apiRoutes,",
+        "  clientEntryUrl: clientEntryUrl ?? undefined,",
+        "  cssManifest,",
+        "  jsManifest,",
+        "});",
+        "",
+        "const entryHref = process.argv[1] ? pathToFileURL(process.argv[1]).href : null;",
+        'if (entryHref && import.meta.url === entryHref) {',
+        '  const server = createServer(handler);',
+        '  const port = Number(process.env.PORT ?? 3000);',
+        '  server.listen(port, () => {',
+        '    console.log(`viact node server listening on http://localhost:${port}`);',
+        '  });',
+        "}",
+        "",
+      ].join("\n");
+    },
+  };
+}
+
 export interface ViactPluginOptions {
   appFile?: string;
   routesDir?: string;
@@ -67,7 +111,7 @@ const DEFAULTS: ResolvedViactPluginOptions = {
   shellsDir: "/src/shells",
   apiDir: "/src/api",
   serverDir: "/src/server",
-  adapter: undefined as unknown as ViactAdapter,
+  adapter: createDefaultNodeAdapter(),
 };
 
 export function viact(options: ViactPluginOptions = {}): Plugin[] {

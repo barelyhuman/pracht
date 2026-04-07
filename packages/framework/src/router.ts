@@ -1,4 +1,4 @@
-import { createContext, h, options } from "preact";
+import { createContext, h } from "preact";
 import { hydrate, render } from "preact";
 import { useContext } from "preact/hooks";
 import type { VNode } from "preact";
