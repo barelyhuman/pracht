@@ -1,6 +1,6 @@
 import { createContext, h } from "preact";
 import type { ComponentChildren, JSX } from "preact";
-import { useContext, useEffect, useState } from "preact/hooks";
+import { useContext, useEffect, useMemo, useState } from "preact/hooks";
 
 import { matchApiRoute, matchAppRoute } from "./app.ts";
 import type {
@@ -95,19 +95,23 @@ export function ViactRuntimeProvider<TData>({
   routeId: string;
   url: string;
 }) {
+  // TODO: make signal with getter to reduce
+  // re-renders caused by the framework itself.
   const [routeData, setRouteData] = useState<TData>(data);
 
   useEffect(() => {
     setRouteData(data);
   }, [data, routeId, url]);
 
+  const context = useMemo(() => ({
+    data: routeData,
+    routeId,
+    setData: setRouteData as (data: unknown) => void,
+    url,
+  }), [routeData, routeId, url]);
+
   return h(RouteDataContext.Provider, {
-    value: {
-      data: routeData,
-      routeId,
-      setData: setRouteData as (data: unknown) => void,
-      url,
-    },
+    value: context,
     children,
   });
 }
