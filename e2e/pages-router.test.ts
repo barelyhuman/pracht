@@ -46,7 +46,7 @@ test("dynamic route captures params", async ({ page }) => {
   await page.goto("/blog/hello-world");
 
   await expect(page.locator(".pages-shell")).toBeVisible();
-  await expect(page.locator("h1")).toContainText("Blog: hello world");
+  await expect(page.locator("h1")).toContainText("Blog: Hello World");
   await expect(page.locator("code")).toContainText("hello-world");
 });
 
@@ -94,7 +94,7 @@ test("client-side navigation to dynamic route", async ({ page }) => {
   const tokenSurvived = await page.evaluate(() => (window as any).__NAV_TOKEN__ === true);
   expect(tokenSurvived).toBe(true);
 
-  await expect(page.locator("h1")).toContainText("Blog: hello world");
+  await expect(page.locator("h1")).toContainText("Blog: Hello World");
 });
 
 // ---------------------------------------------------------------------------
