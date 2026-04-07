@@ -1,9 +1,22 @@
-import type { LoaderArgs, RouteComponentProps } from "viact";
+import type { LoaderArgs, RouteComponentProps, RouteParams } from "viact";
+
+export const RENDER_MODE = "ssg";
+
+const POSTS = [
+  { slug: "hello-world", title: "Hello World" },
+  { slug: "getting-started", title: "Getting Started" },
+  { slug: "pages-router", title: "Pages Router" },
+];
+
+export function getStaticPaths(): RouteParams[] {
+  return POSTS.map((p) => ({ slug: p.slug }));
+}
 
 export async function loader({ params }: LoaderArgs) {
+  const post = POSTS.find((p) => p.slug === params.slug);
   return {
     slug: params.slug,
-    title: `Blog: ${params.slug.replace(/-/g, " ")}`,
+    title: post ? `Blog: ${post.title}` : `Blog: ${params.slug.replace(/-/g, " ")}`,
   };
 }
 
