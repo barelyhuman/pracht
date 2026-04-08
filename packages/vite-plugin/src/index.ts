@@ -320,10 +320,13 @@ export function createPrachtServerModuleSource(
   const clientBuild = readClientBuildAssets(buildOptions.root);
   const adapter = resolved.adapter;
 
-  // The adapter tells us what extra imports it needs (e.g. handlePrachtRequest)
+  // The adapter tells us what extra imports it needs (e.g. handlePrachtRequest).
+  // Always import prerenderApp so the CLI uses the same bundled copy of
+  // @pracht/core (and therefore the same Preact context instances) as the
+  // route/shell modules — avoids dual-copy issues during SSG prerendering.
   const prachtImports = adapter?.serverImports
-    ? adapter.serverImports
-    : 'import { resolveApp, resolveApiRoutes } from "@pracht/core";';
+    ? adapter.serverImports + '\nimport { prerenderApp } from "@pracht/core";'
+    : 'import { resolveApp, resolveApiRoutes, prerenderApp } from "@pracht/core";';
 
   const appImport = isPagesMode
     ? generatePagesAppInlineSource(resolved, buildOptions.root)
@@ -341,6 +344,7 @@ export function createPrachtServerModuleSource(
     `export const clientEntryUrl = ${JSON.stringify(clientBuild.clientEntryUrl ?? CLIENT_BROWSER_PATH)};`,
     `export const cssManifest = ${JSON.stringify(clientBuild.cssManifest)};`,
     `export const jsManifest = ${JSON.stringify(clientBuild.jsManifest)};`,
+    "export { prerenderApp };",
     "",
   ];
 

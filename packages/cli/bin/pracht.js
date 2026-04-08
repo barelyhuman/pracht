@@ -66,11 +66,13 @@ async function dev() {
 
 async function build() {
   // 1. Client build
+  // Use outDir "dist" — Vite 8's environment API (used by @cloudflare/vite-plugin)
+  // outputs the client environment to <outDir>/client/, so "dist" → "dist/client/".
   console.log("\n  Building client...\n");
   await viteBuild({
     root: process.cwd(),
     build: {
-      outDir: "dist/client",
+      outDir: "dist",
       manifest: true,
       rollupOptions: {
         input: "virtual:pracht/client",
@@ -95,7 +97,9 @@ async function build() {
 
   if (existsSync(serverEntry)) {
     const serverMod = await import(serverEntry);
-    const { prerenderApp } = await import("@pracht/core");
+    // Use prerenderApp from the server bundle to share the same Preact context
+    // instances as route/shell modules — avoids dual-copy issues during SSG.
+    const { prerenderApp } = serverMod;
 
     // Read the Vite manifest for asset URLs
     const manifestPath = resolve(clientDir, ".vite/manifest.json");
