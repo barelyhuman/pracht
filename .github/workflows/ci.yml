@@ -34,7 +34,7 @@ jobs:
         run: pnpm build
 
       - name: Cache build output
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@668228422ae6a00e4ad889ee87cd7109ec5666a7
         with:
           path: packages/*/dist
           key: build-${{ github.sha }}
@@ -62,7 +62,7 @@ jobs:
         run: pnpm install
 
       - name: Restore build output
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7
         with:
           path: packages/*/dist
           key: build-${{ github.sha }}
@@ -102,7 +102,7 @@ jobs:
         run: pnpm install
 
       - name: Restore build output
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7
         with:
           path: packages/*/dist
           key: build-${{ github.sha }}
