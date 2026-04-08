@@ -89,9 +89,6 @@ describe("create-pracht", () => {
               "jsxImportSource": "preact",
               "lib": [
                   "ES2022"
-              ],
-              "types": [
-                  "./worker-configuration.d.ts"
               ]
           }
       }"
