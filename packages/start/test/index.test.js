@@ -33,12 +33,21 @@ describe("create-pracht", () => {
 
     const packageJson = await readFile(join(targetDir, "package.json"), "utf-8");
     const routes = await readFile(join(targetDir, "src/routes.ts"), "utf-8");
+    const tsconfig = await readFile(join(targetDir, "tsconfig.json"), "utf-8");
 
     expect(packageJson).toMatch(/"@pracht\/cli": "\^\d+\.\d+\.\d+"/);
     expect(packageJson).toMatch(/"@pracht\/adapter-node": "\^\d+\.\d+\.\d+"/);
     expect(packageJson).not.toContain("wrangler");
     expect(routes).toContain('route("/", "./routes/home.tsx"');
     expect(existsSync(join(targetDir, "wrangler.jsonc"))).toBe(false);
+    expect(tsconfig).toMatchInlineSnapshot(`
+      "{
+          "compilerOptions": {
+              "jsx": "react-jsx",
+              "jsxImportSource":"preact"
+          }
+      }"
+    `);
   });
 
   it("scaffolds a cloudflare starter", async () => {

@@ -299,6 +299,10 @@ async function buildProjectFiles({ adapter, packageManager, projectName, router 
     "vite.config.ts": createViteConfig(adapter, router),
   };
 
+  if(adapter.id === "node"){
+    files["tsconfig.json"] = createBaseTSConfig(adapter)
+  }
+
   if (router === "pages") {
     files["src/pages/_app.tsx"] = createShellFile(projectName);
     files["src/pages/index.tsx"] = createPagesHomeRoute(adapter);
@@ -502,6 +506,17 @@ function createPagesHomeRoute(adapter) {
     "  );",
     "}",
     "",
+  ].join("\n");
+}
+
+function createBaseTSConfig(_adapter) {
+  return [
+    "{",
+    "    \"compilerOptions\": {",
+    "        \"jsx\": \"react-jsx\",",
+    "        \"jsxImportSource\":\"preact\"",
+    "    }",
+    "}",
   ].join("\n");
 }
 
