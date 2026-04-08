@@ -47,11 +47,11 @@ The vite plugin transforms import functions to strings at build time, so both pr
 
 Top-level configuration:
 
-| Field        | Type                                        | Description                                                |
-| ------------ | ------------------------------------------- | ---------------------------------------------------------- |
-| `shells`     | `Record<string, ModuleRef>`                 | Named shell modules — use `() => import("./path")` for IDE navigation |
-| `middleware` | `Record<string, ModuleRef>`                 | Named middleware modules                                   |
-| `routes`     | `(RouteDefinition \| GroupDefinition)[]`    | Route tree                                                 |
+| Field        | Type                                     | Description                                                           |
+| ------------ | ---------------------------------------- | --------------------------------------------------------------------- |
+| `shells`     | `Record<string, ModuleRef>`              | Named shell modules — use `() => import("./path")` for IDE navigation |
+| `middleware` | `Record<string, ModuleRef>`              | Named middleware modules                                              |
+| `routes`     | `(RouteDefinition \| GroupDefinition)[]` | Route tree                                                            |
 
 ### `route(path, file, meta?)`
 

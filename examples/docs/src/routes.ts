@@ -6,7 +6,9 @@ export const app = defineApp({
     docs: () => import("./shells/docs.tsx"),
   },
   routes: [
-    group({ shell: "home" }, [route("/", () => import("./routes/home.tsx"), { id: "home", render: "ssg" })]),
+    group({ shell: "home" }, [
+      route("/", () => import("./routes/home.tsx"), { id: "home", render: "ssg" }),
+    ]),
     group({ shell: "docs" }, [
       route("/docs", () => import("./routes/docs/index.tsx"), { id: "docs-index", render: "ssr" }),
       route("/docs/getting-started", () => import("./routes/docs/getting-started.md"), {

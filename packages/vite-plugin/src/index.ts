@@ -189,10 +189,7 @@ export async function pracht(options: PrachtPluginOptions = {}): Promise<Plugin[
       const appFileAbs = resolve(root, resolved.appFile.slice(1));
       if (id !== appFileAbs) return null;
 
-      const transformed = code.replace(
-        /\(\)\s*=>\s*import\(\s*(['"])([^'"]+)\1\s*\)/g,
-        "$1$2$1",
-      );
+      const transformed = code.replace(/\(\)\s*=>\s*import\(\s*(['"])([^'"]+)\1\s*\)/g, "$1$2$1");
       if (transformed === code) return null;
       return { code: transformed, map: null };
     },
