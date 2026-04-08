@@ -7,9 +7,12 @@ Preact-first full-stack framework on Vite with an explicit route manifest, per-r
 ```bash
 pnpm install
 pnpm build
+pnpm format:check
 pnpm test
 pnpm e2e
 ```
+
+For CI-parity checks, run `pnpm typecheck`, `pnpm format:check`, `pnpm lint`, `pnpm test`, and `pnpm e2e`.
 
 ## Create An App
 
