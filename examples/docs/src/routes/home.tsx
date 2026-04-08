@@ -1,4 +1,16 @@
 import type { RouteComponentProps } from "@pracht/core";
+import type { Icon } from "@tabler/icons-preact";
+import {
+  IconSitemap,
+  IconBolt,
+  IconAtom,
+  IconWorld,
+  IconSettings,
+  IconLock,
+  IconArrowRight,
+  IconServerBolt,
+  IconPlug,
+} from "@tabler/icons-preact";
 import { CodeBlock } from "../components/CodeBlock";
 
 export async function loader() {
@@ -9,34 +21,34 @@ export function head() {
   return { title: "pracht — Preact-first. Vite-native. Explicit routing." };
 }
 
-const FEATURES = [
+const FEATURES: { Icon: Icon; title: string; desc: string }[] = [
   {
-    icon: "🗺",
+    Icon: IconSitemap,
     title: "Explicit Route Manifest",
     desc: "Define routes in code, not filesystem conventions. Assign shells, middleware, and render modes per group or route — auditable and type-checked.",
   },
   {
-    icon: "⚡",
+    Icon: IconBolt,
     title: "Per-Route Render Modes",
     desc: "SSG, SSR, ISG, and SPA — pick the right strategy for each page. Mix static marketing pages with dynamic dashboards in a single app.",
   },
   {
-    icon: "🔷",
+    Icon: IconAtom,
     title: "Preact-First",
     desc: "Built on Preact for a tiny runtime. Full hooks support, JSX, and the complete Preact ecosystem. Fast by default.",
   },
   {
-    icon: "🌐",
+    Icon: IconWorld,
     title: "Edge-Ready Adapters",
     desc: "Deploy to Cloudflare Workers, Vercel Edge Functions, or Node.js. Thin adapter layers with no vendor lock-in.",
   },
   {
-    icon: "⚙️",
+    Icon: IconSettings,
     title: "Vite-Native",
     desc: "Full Vite pipeline for client and SSR builds. Bring your own plugins — Tailwind, MDX, image tools all work without special integration.",
   },
   {
-    icon: "🔒",
+    Icon: IconLock,
     title: "End-to-End Types",
     desc: "Loader return types flow automatically to components. No manual typing, no casting — just inference from server to client.",
   },
@@ -69,6 +81,33 @@ const MODES = [
   },
 ];
 
+const GET_STARTED_LINKS: { href: string; Icon: Icon; title: string; sub: string }[] = [
+  {
+    href: "/docs/routing",
+    Icon: IconSitemap,
+    title: "Routing",
+    sub: "Manifest API, groups, paths",
+  },
+  {
+    href: "/docs/rendering",
+    Icon: IconBolt,
+    title: "Rendering",
+    sub: "SSG, SSR, ISG, SPA",
+  },
+  {
+    href: "/docs/data-loading",
+    Icon: IconServerBolt,
+    title: "Data Loading",
+    sub: "Loaders, actions, hooks",
+  },
+  {
+    href: "/docs/adapters",
+    Icon: IconPlug,
+    title: "Adapters",
+    sub: "Cloudflare, Vercel, Node",
+  },
+];
+
 export function Component({ data }: RouteComponentProps<typeof loader>) {
   return (
     <div>
@@ -96,7 +135,8 @@ export function Component({ data }: RouteComponentProps<typeof loader>) {
 
           <div class="hero-actions">
             <a href="/docs/routing" class="btn btn-primary">
-              Read the docs →
+              Read the docs
+              <IconArrowRight size={14} stroke={2} />
             </a>
             <a href="/docs/adapters" class="btn btn-secondary">
               View Adapters
@@ -145,7 +185,9 @@ export const app = defineApp({
           <div class="features-grid">
             {FEATURES.map((f) => (
               <div key={f.title} class="feature-card">
-                <div class="feature-icon">{f.icon}</div>
+                <div class="feature-icon">
+                  <f.Icon size={18} stroke={1.5} />
+                </div>
                 <h3>{f.title}</h3>
                 <p>{f.desc}</p>
               </div>
@@ -195,7 +237,8 @@ export const app = defineApp({
               component tree updates without a full page reload.
             </p>
             <a href="/docs/data-loading" class="btn btn-secondary" style="display:inline-flex;">
-              Data loading guide →
+              Data loading guide
+              <IconArrowRight size={14} stroke={2} />
             </a>
           </div>
           <div>
@@ -238,34 +281,11 @@ export function Component({ data }: RouteComponentProps<typeof loader>) {
             <span>npm create pracht@latest my-app</span>
           </div>
           <div class="docs-links">
-            {[
-              {
-                href: "/docs/routing",
-                icon: "🗺",
-                title: "Routing",
-                sub: "Manifest API, groups, paths",
-              },
-              {
-                href: "/docs/rendering",
-                icon: "⚡",
-                title: "Rendering",
-                sub: "SSG, SSR, ISG, SPA",
-              },
-              {
-                href: "/docs/data-loading",
-                icon: "📡",
-                title: "Data Loading",
-                sub: "Loaders, actions, hooks",
-              },
-              {
-                href: "/docs/adapters",
-                icon: "🌐",
-                title: "Adapters",
-                sub: "Cloudflare, Vercel, Node",
-              },
-            ].map((l) => (
+            {GET_STARTED_LINKS.map((l) => (
               <a key={l.href} href={l.href} class="doc-link-card">
-                <span style="font-size:20px;">{l.icon}</span>
+                <span class="dlc-icon">
+                  <l.Icon size={16} stroke={1.5} />
+                </span>
                 <span class="dlc-title">{l.title}</span>
                 <span class="dlc-sub">{l.sub}</span>
               </a>

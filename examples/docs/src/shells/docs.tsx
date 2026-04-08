@@ -1,75 +1,101 @@
 import { useLocation } from "@pracht/core";
 import type { ShellProps } from "@pracht/core";
+import type { Icon } from "@tabler/icons-preact";
+import {
+  IconRocket,
+  IconSitemap,
+  IconBolt,
+  IconServerBolt,
+  IconPlug,
+  IconShield,
+  IconLayout,
+  IconTerminal2,
+  IconCloud,
+  IconGauge,
+  IconWorld,
+  IconLock,
+  IconForms,
+  IconTestPipe,
+  IconTriangle,
+  IconRefresh,
+  IconBrandGithub,
+} from "@tabler/icons-preact";
 import "../styles/global.css";
 
 const NAV = [
   {
     label: "Getting Started",
     links: [
-      { href: "/docs/getting-started", icon: "🚀", title: "Quick Start" },
-      { href: "/docs/routing", icon: "🗺", title: "Routing" },
+      { href: "/docs/getting-started", Icon: IconRocket, title: "Quick Start" },
+      { href: "/docs/routing", Icon: IconSitemap, title: "Routing" },
     ],
   },
   {
     label: "Core Concepts",
     links: [
-      { href: "/docs/rendering", icon: "⚡", title: "Rendering Modes" },
-      { href: "/docs/data-loading", icon: "📡", title: "Data Loading" },
-      { href: "/docs/api-routes", icon: "🔌", title: "API Routes" },
-      { href: "/docs/middleware", icon: "🛡", title: "Middleware" },
-      { href: "/docs/shells", icon: "📐", title: "Shells" },
+      { href: "/docs/rendering", Icon: IconBolt, title: "Rendering Modes" },
+      { href: "/docs/data-loading", Icon: IconServerBolt, title: "Data Loading" },
+      { href: "/docs/api-routes", Icon: IconPlug, title: "API Routes" },
+      { href: "/docs/middleware", Icon: IconShield, title: "Middleware" },
+      { href: "/docs/shells", Icon: IconLayout, title: "Shells" },
     ],
   },
   {
     label: "Guides",
     links: [
-      { href: "/docs/cli", icon: "⌨", title: "CLI" },
-      { href: "/docs/deployment", icon: "🚢", title: "Deployment" },
+      { href: "/docs/cli", Icon: IconTerminal2, title: "CLI" },
+      { href: "/docs/deployment", Icon: IconCloud, title: "Deployment" },
     ],
   },
   {
     label: "Advanced",
     links: [
-      { href: "/docs/prefetching", icon: "🔮", title: "Prefetching" },
-      { href: "/docs/performance", icon: "⚡", title: "Performance" },
+      { href: "/docs/prefetching", Icon: IconBolt, title: "Prefetching" },
+      { href: "/docs/performance", Icon: IconGauge, title: "Performance" },
     ],
   },
   {
     label: "Recipes",
     links: [
-      { href: "/docs/recipes/i18n", icon: "🌍", title: "i18n" },
-      { href: "/docs/recipes/auth", icon: "🔒", title: "Authentication" },
-      { href: "/docs/recipes/forms", icon: "📝", title: "Forms" },
-      { href: "/docs/recipes/testing", icon: "🧪", title: "Testing" },
-      { href: "/docs/recipes/fullstack-cloudflare", icon: "☁", title: "Full-Stack Cloudflare" },
-      { href: "/docs/recipes/fullstack-vercel", icon: "▲", title: "Full-Stack Vercel" },
+      { href: "/docs/recipes/i18n", Icon: IconWorld, title: "i18n" },
+      { href: "/docs/recipes/auth", Icon: IconLock, title: "Authentication" },
+      { href: "/docs/recipes/forms", Icon: IconForms, title: "Forms" },
+      { href: "/docs/recipes/testing", Icon: IconTestPipe, title: "Testing" },
+      {
+        href: "/docs/recipes/fullstack-cloudflare",
+        Icon: IconCloud,
+        title: "Full-Stack Cloudflare",
+      },
+      { href: "/docs/recipes/fullstack-vercel", Icon: IconTriangle, title: "Full-Stack Vercel" },
     ],
   },
   {
     label: "Migration",
-    links: [{ href: "/docs/migrate/nextjs", icon: "🔄", title: "From Next.js" }],
+    links: [{ href: "/docs/migrate/nextjs", Icon: IconRefresh, title: "From Next.js" }],
   },
   {
     label: "Reference",
-    links: [{ href: "/docs/adapters", icon: "🌐", title: "Adapters" }],
+    links: [{ href: "/docs/adapters", Icon: IconPlug, title: "Adapters" }],
   },
 ];
 
 function NavLink({
   href,
-  icon,
+  Icon,
   title,
   currentPath,
 }: {
   href: string;
-  icon: string;
+  Icon: Icon;
   title: string;
   currentPath: string;
 }) {
   const active = currentPath === href;
   return (
     <a href={href} class={active ? "active" : ""}>
-      <span class="sidebar-icon">{icon}</span>
+      <span class="sidebar-icon">
+        <Icon size={14} stroke={1.75} />
+      </span>
       {title}
     </a>
   );
@@ -99,9 +125,7 @@ export function Shell({ children }: ShellProps) {
               target="_blank"
               rel="noopener"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
-              </svg>
+              <IconBrandGithub size={15} stroke={1.5} />
               GitHub
             </a>
           </div>
@@ -135,6 +159,21 @@ export function head() {
         name: "description",
         content:
           "pracht documentation — routing, rendering modes, data loading, and deployment adapters.",
+      },
+    ],
+    link: [
+      {
+        rel: "preconnect",
+        href: "https://fonts.googleapis.com",
+      },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossorigin: "",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;450;500;550;600;650;700&display=swap",
       },
     ],
   };
