@@ -1,6 +1,15 @@
 {
   "name": "@pracht/adapter-node",
   "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JoviDeCroock/pracht.git",
+    "directory": "packages/adapter-node"
+  },
+  "homepage": "https://github.com/JoviDeCroock/pracht/tree/main/packages/adapter-node",
+  "bugs": {
+    "url": "https://github.com/JoviDeCroock/pracht/issues"
+  },
   "files": [
     "dist"
   ],
