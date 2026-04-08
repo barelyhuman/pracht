@@ -506,7 +506,7 @@ function createPagesHomeRoute(adapter) {
   ].join("\n");
 }
 
-function createBaseTSConfig(adapter) {
+function createBaseTSConfig(_adapter) {
   const config = {
     compilerOptions: {
       jsx: "react-jsx",
