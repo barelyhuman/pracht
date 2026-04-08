@@ -10,6 +10,7 @@
     "test": "vitest run",
     "pracht": "node ./packages/cli/bin/pracht.js",
     "format": "oxfmt --write .",
+    "format:check": "oxfmt --check .",
     "lint": "oxlint . --fix",
     "changeset": "changeset",
     "version": "changeset version",
