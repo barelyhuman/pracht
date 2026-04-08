@@ -514,10 +514,6 @@ function createBaseTSConfig(adapter) {
       lib: ["ES2022"],
     },
   };
-  if (adapter.id === "cloudflare") {
-    config.compilerOptions.types ||= [];
-    config.compilerOptions.types.push("./worker-configuration.d.ts");
-  }
   return JSON.stringify(config, null, 4);
 }
 
