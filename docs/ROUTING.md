@@ -36,6 +36,13 @@ export const app = defineApp({
 });
 ```
 
+Module references accept two forms — both are fully supported:
+
+- **`() => import("./path")`** — enables IDE ctrl+click navigation (recommended)
+- **`"./path"`** — plain string, shorter syntax
+
+The vite plugin transforms import functions to strings at build time, so both produce identical runtime behavior.
+
 ### `defineApp(config)`
 
 Top-level configuration:

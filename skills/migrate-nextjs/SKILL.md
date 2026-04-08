@@ -312,7 +312,7 @@ Key transforms:
 
 **Note:** For pages router projects using `pagesDir`, this phase is automatic. Skip to Phase 8.
 
-Build `src/routes.ts` mapping every migrated page:
+Build `src/routes.ts` mapping every migrated page. Module references accept `() => import("./path")` (enables IDE navigation) or plain `"./path"` strings — both work:
 
 ```ts
 import { defineApp, group, route } from "@pracht/core";
